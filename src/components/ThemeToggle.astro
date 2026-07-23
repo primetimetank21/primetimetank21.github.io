@@ -13,6 +13,7 @@
   data-testid="theme-toggle"
   type="button"
   aria-label="Switch to light theme"
+  aria-pressed="false"
   title="Toggle theme"
 >
   <!-- Sun icon — shown in dark theme (click to go light) -->
@@ -39,7 +40,9 @@
 
   function syncLabel(): void {
     const theme = document.documentElement.dataset.theme ?? 'dark';
-    btn.setAttribute('aria-label', `Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`);
+    const isLight = theme === 'light';
+    btn.setAttribute('aria-label', `Switch to ${isLight ? 'dark' : 'light'} theme`);
+    btn.setAttribute('aria-pressed', String(isLight));
   }
 
   btn.addEventListener('click', () => {
@@ -61,9 +64,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 2rem;
-    height: 2rem;
-    padding: var(--space-1);
+    width: 2.75rem;   /* 44px — WCAG 2.5.5 minimum tap target */
+    height: 2.75rem;
+    padding: var(--space-2);
     background: transparent;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);

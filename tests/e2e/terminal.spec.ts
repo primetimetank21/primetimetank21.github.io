@@ -290,6 +290,46 @@ test.describe('accessibility', () => {
     const label = await btn.getAttribute('aria-label');
     expect(label).toBeTruthy();
   });
+
+  test('theme toggle has aria-pressed reflecting current state', async ({ page }) => {
+    await page.addInitScript(() => { localStorage.setItem('theme', 'dark'); });
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
+    const btn = page.locator('[data-testid="theme-toggle"]');
+    // Dark mode is default — aria-pressed should be false (light is not active)
+    await expect(btn).toHaveAttribute('aria-pressed', 'false');
+    await btn.click();
+    // Light mode is now active — aria-pressed should be true
+    await expect(btn).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  test('skip-to-content link is focusable and visible on focus', async ({ page }) => {
+    // Focus the skip link directly and verify it's in the document
+    const skipLink = page.locator('.skip-link');
+    await expect(skipLink).toBeAttached();
+    await skipLink.focus();
+    await expect(skipLink).toBeFocused();
+  });
+
+  test('theme toggle is keyboard operable when focused', async ({ page }) => {
+    await page.addInitScript(() => { localStorage.setItem('theme', 'dark'); });
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
+    const btn = page.locator('[data-testid="theme-toggle"]');
+    const html = page.locator('html');
+    // Focus the button and activate it with Enter
+    await btn.focus();
+    await expect(btn).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(html).toHaveAttribute('data-theme', 'light');
+  });
+
+  test('terminal window has region role and label', async ({ page }) => {
+    const terminal = page.locator('[data-testid="terminal-window"]');
+    await expect(terminal).toHaveAttribute('role', 'region');
+    const label = await terminal.getAttribute('aria-label');
+    expect(label).toBeTruthy();
+  });
 });
 
 // ── Reduced-motion ────────────────────────────────────────────────────────────

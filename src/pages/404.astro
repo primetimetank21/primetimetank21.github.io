@@ -1,0 +1,312 @@
+---
+/**
+ * 404.astro — on-brand "command not found" error page.
+ *
+ * GitHub Pages serves this file for any unmatched route.
+ * Rendered as a terminal window matching the Tokyo Night aesthetic.
+ */
+import Layout from '../layouts/Layout.astro';
+
+const path = Astro.url.pathname;
+---
+
+<Layout
+  title="404 — command not found | primetimetank21"
+  description="The page you are looking for does not exist."
+  canonicalURL="https://primetimetank21.github.io/404"
+>
+  <div class="not-found" data-testid="not-found-page">
+
+    <div class="terminal-window" role="region" aria-label="404 error terminal">
+
+      <!-- Title bar -->
+      <div class="terminal-titlebar" aria-hidden="true">
+        <div class="terminal-dots">
+          <span class="dot dot-close"></span>
+          <span class="dot dot-min"></span>
+          <span class="dot dot-max"></span>
+        </div>
+        <span class="terminal-title">primetimetank21 — bash</span>
+        <span class="terminal-title-spacer"></span>
+      </div>
+
+      <!-- Terminal body -->
+      <div class="terminal-body">
+        <!-- Command echo -->
+        <div class="terminal-entry">
+          <div class="entry-command">
+            <span class="entry-prompt" aria-hidden="true">❯</span>
+            <span class="entry-cmd">cd <span class="path-text">{path}</span></span>
+          </div>
+        </div>
+
+        <!-- Error output -->
+        <div class="error-output" role="alert">
+          <p class="error-line">
+            <span class="error-badge" aria-label="Error">✗</span>
+            <span>command not found: <code class="path-text">{path}</code></span>
+          </p>
+          <p class="error-sub">No such file or directory</p>
+        </div>
+
+        <!-- Suggestions -->
+        <div class="suggestions">
+          <p class="suggestions-heading">Try one of these instead:</p>
+          <ul class="suggestions-list" aria-label="Available routes">
+            <li>
+              <span class="cmd-text">cd /</span>
+              <span class="cmd-desc">— return to the main terminal</span>
+            </li>
+            <li>
+              <span class="cmd-text">help</span>
+              <span class="cmd-desc">— list available commands (in the terminal)</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Home link -->
+        <div class="home-prompt">
+          <span class="prompt-glyph" aria-hidden="true">❯</span>
+          <a href="/" class="home-link" aria-label="Return to home terminal">
+            Return to terminal
+          </a>
+          <span class="cursor" aria-hidden="true"></span>
+        </div>
+      </div><!-- /terminal-body -->
+
+    </div><!-- /terminal-window -->
+
+  </div><!-- /not-found -->
+</Layout>
+
+<style>
+  /* ─── Layout ─────────────────────────────────────────────────────────────── */
+  .not-found {
+    width: 100%;
+    max-width: var(--terminal-max-width);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* ─── Terminal window (mirror of TerminalShell chrome) ───────────────────── */
+  .terminal-window {
+    width: 100%;
+    min-height: var(--terminal-min-height);
+    display: flex;
+    flex-direction: column;
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  }
+
+  .terminal-titlebar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: 0 var(--terminal-padding-x);
+    height: var(--terminal-titlebar-h);
+    background: var(--color-bg-popup);
+    border-bottom: 1px solid var(--color-border);
+    flex-shrink: 0;
+  }
+
+  .terminal-dots {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .dot {
+    display: block;
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: var(--radius-full);
+  }
+
+  .dot-close { background: var(--color-dot-close); }
+  .dot-min   { background: var(--color-dot-min);   }
+  .dot-max   { background: var(--color-dot-max);   }
+
+  .terminal-title {
+    flex: 1;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    color: var(--color-fg-subtle);
+    user-select: none;
+    letter-spacing: 0.02em;
+    margin-right: calc(3 * 0.75rem + 2 * var(--space-2));
+  }
+
+  .terminal-title-spacer {
+    width: calc(3 * 0.75rem + 2 * var(--space-2));
+    flex-shrink: 0;
+  }
+
+  .terminal-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: var(--terminal-padding-y) var(--terminal-padding-x);
+    font-family: var(--font-mono);
+    font-size: var(--terminal-font-size);
+    line-height: var(--line-height-mono);
+    gap: var(--space-5);
+  }
+
+  /* ─── Command echo ───────────────────────────────────────────────────────── */
+  .terminal-entry {
+    margin: 0;
+  }
+
+  .entry-command {
+    display: flex;
+    gap: var(--space-2);
+    color: var(--color-fg);
+  }
+
+  .entry-prompt {
+    color: var(--color-prompt);
+    flex-shrink: 0;
+  }
+
+  .entry-cmd {
+    color: var(--color-accent);
+  }
+
+  .path-text {
+    color: var(--color-warning);
+    font-family: var(--font-mono);
+  }
+
+  /* ─── Error output ───────────────────────────────────────────────────────── */
+  .error-output {
+    border-left: 2px solid var(--color-error);
+    padding-left: var(--space-4);
+  }
+
+  .error-line {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+    color: var(--color-error);
+    font-size: var(--font-size-md);
+    font-weight: 700;
+    margin-bottom: var(--space-1);
+  }
+
+  .error-badge {
+    font-size: 1.1em;
+    flex-shrink: 0;
+  }
+
+  .error-sub {
+    color: var(--color-fg-muted);
+    font-size: var(--font-size-sm);
+    padding-left: calc(var(--space-2) + 1.1em);
+  }
+
+  /* ─── Suggestions ────────────────────────────────────────────────────────── */
+  .suggestions {
+    padding-left: var(--space-5);
+  }
+
+  .suggestions-heading {
+    color: var(--color-fg-muted);
+    margin-bottom: var(--space-3);
+    font-size: var(--font-size-sm);
+  }
+
+  .suggestions-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .suggestions-list li {
+    display: flex;
+    gap: var(--space-3);
+    align-items: baseline;
+    flex-wrap: wrap;
+  }
+
+  .cmd-text {
+    color: var(--color-info);
+    min-width: 10ch;
+    flex-shrink: 0;
+  }
+
+  .cmd-desc {
+    color: var(--color-fg-muted);
+    font-size: var(--font-size-sm);
+  }
+
+  /* ─── Home prompt ────────────────────────────────────────────────────────── */
+  .home-prompt {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-top: auto;
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border-subtle);
+  }
+
+  .prompt-glyph {
+    color: var(--color-prompt);
+    user-select: none;
+  }
+
+  .home-link {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    font-family: var(--font-mono);
+    transition: color var(--duration-fast) var(--easing-default);
+  }
+
+  .home-link:hover {
+    color: var(--color-info);
+  }
+
+  .cursor {
+    display: inline-block;
+    width: 0.55em;
+    height: 1.1em;
+    background: var(--color-cursor);
+    vertical-align: text-bottom;
+    animation: cursor-blink 1s step-end infinite;
+  }
+
+  @keyframes cursor-blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cursor {
+      animation: none !important;
+      opacity: 1 !important;
+    }
+  }
+
+  /* ─── Responsive ─────────────────────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .terminal-window {
+      border-radius: var(--radius-lg);
+      min-height: 60dvh;
+    }
+
+    .terminal-body {
+      padding: var(--terminal-padding-y) var(--space-3);
+      font-size: var(--font-size-sm);
+    }
+
+    .error-line {
+      font-size: var(--font-size-base);
+    }
+  }
+</style>
