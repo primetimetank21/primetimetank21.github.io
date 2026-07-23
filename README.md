@@ -60,17 +60,30 @@ npm run test
 > ⚠️ **Baselines MUST be generated on Linux.**
 > Windows and macOS produce different font-rendering output than CI — committing non-Linux baselines causes flake on every PR.
 
-### Generate / update baselines — Actions workflow (recommended)
+### The visual check is a BLOCKING gate
 
-No Docker required. Uses the same pinned Linux image as CI.
+The `Visual Regression (Linux baselines)` job in CI compares every PR's screenshots against committed Linux baselines. A diff = failure = the PR cannot merge. This is intentional: it catches accidental layout regressions.
 
-1. Go to **Actions** → **Update Visual Baselines** in the GitHub UI.
-2. Click **Run workflow**, choose the target branch (default: `main`), click the green **Run workflow** button.
-3. The job runs on the Linux runner, commits updated `tests/e2e/__snapshots__/` directly to that branch, and exits.
+**When you make an intentional UI change** (new feature, style fix, a11y tweak), the baselines need to be refreshed so CI sees the intended result. That's what `Update Visual Baselines` is for.
 
-> **Branch protection note:** The bot pushes directly (not via PR). This works as long as "Require a pull request before merging" is not enabled on `main`.
+### Bless intentional UI changes on a PR branch (recommended flow)
 
-### Generate / update baselines — local Docker (optional)
+1. Push your changes to a PR branch (e.g. `squad/issue-26-m4-polish`).
+2. If the `Visual Regression` check fails: go to **Actions** → **Update Visual Baselines** → **Run workflow**.
+3. Set the **branch** input to your PR branch name (e.g. `squad/issue-26-m4-polish`). Click **Run workflow**.
+4. The workflow runs in the Linux Playwright container, generates fresh baselines, and commits them **directly to your PR branch**.
+5. The visual check re-runs automatically once the commit lands — it should turn green.
+6. Review the updated PNGs in your PR diff. They ARE the visual record of what the site looks like. Approve them before merging.
+
+### Update baselines after a merge to main
+
+Run the same workflow with **branch = main** (the default). Since branch protection blocks direct pushes to main, the workflow creates a `baselines/auto-<run-id>` branch and opens a PR with auto-merge enabled. It lands once CI passes. Earl can also merge manually:
+
+```sh
+gh pr merge baselines/auto-<run-id> --admin --squash
+```
+
+### Local alternative (optional, requires Docker)
 
 If you prefer to run locally and have Docker available:
 
@@ -96,11 +109,17 @@ git commit -m "test(visual): update Linux baselines"
 
 | Workflow | Trigger | Jobs |
 |----------|---------|------|
-| `Build & Check` | Pull request → `main` | Build · Type-check · Unit tests · E2E smoke · Visual (advisory) |
+| `Build & Check` | Pull request → `main` | Build · Type-check · Unit tests · E2E (smoke + terminal) · **Visual Regression (blocking)** |
 | `Deploy to GitHub Pages` | Push to `main` | Build · Deploy |
-| `Update Visual Baselines` | Manual (`workflow_dispatch`) | Regenerate + commit Linux snapshots |
+| `Update Visual Baselines` | Manual (`workflow_dispatch`, `branch` input) | Regenerate + commit Linux snapshots |
 
 **Deploy gate:** merging to `main` = publish. PRs never deploy.
+
+**Required status checks (all blocking):**
+- `Build, Type-check & Link-check`
+- `Unit Tests (Vitest)`
+- `E2E Tests (Playwright)`
+- `Visual Regression (Linux baselines)` ← promoted from advisory in M4
 
 ---
 

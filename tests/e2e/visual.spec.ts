@@ -1,16 +1,29 @@
 import { test, expect } from '@playwright/test';
 
 /**
- * Visual regression specs.
+ * Visual regression specs — BLOCKING gate in CI.
  *
- * ⚠️  BASELINES MUST BE LINUX-GENERATED.
- *   These tests are advisory in CI (continue-on-error) until baselines
- *   are committed. To generate/refresh baselines:
+ * Baselines MUST be Linux-generated (same pinned Playwright image as CI).
+ * Windows/macOS font rendering differs → committing non-Linux baselines = flake.
  *
- *   RECOMMENDED: Actions → "Update Visual Baselines" → Run workflow
- *   (commits Linux snapshots directly — no Docker needed locally).
+ * ── Blessing intentional UI changes (PR flow) ────────────────────────────────
+ *   1. Make your change, push to your PR branch.
+ *   2. If the visual check fails (expected for visible layout changes):
+ *        Actions → "Update Visual Baselines" → Run workflow
+ *        branch input: <your-pr-branch>   (e.g. squad/issue-26-m4-polish)
+ *   3. The workflow regenerates baselines in the Linux container and commits
+ *      them directly to your PR branch. The visual check re-runs automatically
+ *      and turns green once the commit lands.
+ *   4. Review the new PNGs in your PR diff before merging — they ARE the record
+ *      of what the site looks like.
  *
- *   See README.md § "Visual Regression Baselines" for full procedure.
+ * ── Updating baselines after a merge to main ─────────────────────────────────
+ *   Same workflow, branch input: main (the default). This creates a
+ *   baselines/auto-<run-id> branch + PR (branch protection on main prevents
+ *   direct push). Earl can also merge manually: gh pr merge --admin --squash.
+ *
+ * ── Local alternative (requires Docker) ─────────────────────────────────────
+ *   See README.md § "Visual Regression Baselines".
  */
 
 // ─── Homepage (legacy) ────────────────────────────────────────────────────────
@@ -97,6 +110,20 @@ test.describe('terminal light theme', () => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
     await expect(page).toHaveScreenshot('terminal-light-empty-mobile.png', {
+      animations: 'disabled',
+    });
+  });
+});
+
+// ─── 404 page ─────────────────────────────────────────────────────────────────
+
+test.describe('404 page', () => {
+  test('404 dark theme — desktop', async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('theme', 'dark'));
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/this-page-does-not-exist');
+    await page.waitForLoadState('networkidle');
+    await expect(page).toHaveScreenshot('404-dark-desktop.png', {
       animations: 'disabled',
     });
   });

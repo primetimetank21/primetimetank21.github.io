@@ -1,18 +1,34 @@
 name: Update Visual Baselines
 
 # Manually triggered from the Actions tab.
-# GitHub asks "Run workflow on branch:" — pick the branch you want baselines
-# committed to (default: main). The bot generates snapshots in the Playwright
-# container, then opens a PR from a baselines/auto-<run-id> branch. Once CI
-# passes on the PR, it auto-merges to main.
 #
-# ⚠️ Branch protection note:
-#   github-actions[bot] cannot push directly to main (required status checks).
-#   Instead this workflow creates a branch, opens a PR, and enables auto-merge.
-#   The PR will merge automatically once the three required checks turn green.
+# USAGE:
+#   1. Go to Actions → "Update Visual Baselines" → Run workflow
+#   2. Leave "branch" as `main` to update main after a merged change, OR
+#      enter a PR branch (e.g. `squad/issue-26-m4-polish`) to bless
+#      intentional UI changes on that PR before review.
+#   3. Click "Run workflow".
+#
+# WHAT HAPPENS:
+#   - For a PR branch (non-main): baselines are committed DIRECTLY to that
+#     branch. The now-blocking visual check re-runs automatically and goes
+#     green once the commit lands.
+#   - For main: baselines are committed to a `baselines/auto-<run-id>` branch
+#     and a PR is opened with auto-merge enabled (branch protection prevents a
+#     direct push to main). Earl can also merge it manually with:
+#       gh pr merge baselines/auto-<run-id> --admin --squash
+#
+# ⚠️ The container (mcr.microsoft.com/playwright:v1.61.1-noble) is the same
+#    pinned image as CI — guarantees identical font rendering so comparison
+#    won't flake due to rendering differences.
 
 on:
   workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Target branch for baseline regeneration (default: main). Enter a PR branch name to bless UI changes on that PR.'
+        required: false
+        default: 'main'
 
 permissions:
   contents: write
@@ -23,14 +39,14 @@ jobs:
   generate-baselines:
     name: Regenerate Visual Baselines (Linux)
     runs-on: ubuntu-latest
-    # Same pinned image used by build-check.yml visual-advisory job —
-    # guarantees identical font rendering, so CI comparisons won't flake.
     container:
       image: mcr.microsoft.com/playwright:v1.61.1-noble
 
     steps:
-      - name: Checkout
+      - name: Checkout target branch
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -56,15 +72,15 @@ jobs:
 
   # ── Job 2: Commit baselines on a plain runner (gh CLI available) ───────────
   commit-baselines:
-    name: Open baseline-update PR
+    name: Commit baselines to branch
     needs: generate-baselines
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout target branch
         uses: actions/checkout@v4
         with:
-          # Persist credentials so the push and gh pr commands are authenticated.
+          ref: ${{ github.event.inputs.branch }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download snapshot artifacts
@@ -73,25 +89,37 @@ jobs:
           name: visual-snapshots
           path: tests/e2e/__snapshots__/
 
-      - name: Commit and open PR (only when changed)
+      - name: Commit and push baselines
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGET_BRANCH: ${{ github.event.inputs.branch }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add tests/e2e/__snapshots__/
           if git diff --staged --quiet; then
             echo "Baselines unchanged — nothing to commit."
-          else
-            BRANCH="baselines/auto-${GITHUB_RUN_ID}"
-            git checkout -b "$BRANCH"
+            exit 0
+          fi
+
+          if [ "$TARGET_BRANCH" = "main" ]; then
+            # For main: branch protection blocks direct push.
+            # Create a baselines/* branch, open PR, enable auto-merge.
+            BASELINE_BRANCH="baselines/auto-${GITHUB_RUN_ID}"
+            git checkout -b "$BASELINE_BRANCH"
             git commit -m "test(visual): regenerate Linux baselines [skip ci]"
-            git push origin "$BRANCH"
+            git push origin "$BASELINE_BRANCH"
             gh pr create \
               --title "test(visual): regenerate Linux baselines" \
-              --body "Automated baseline update from workflow run \`${GITHUB_RUN_ID}\`. Merge once CI is green." \
+              --body "Automated baseline update from workflow run \`${GITHUB_RUN_ID}\`. Auto-merges once CI passes. To merge manually: \`gh pr merge ${BASELINE_BRANCH} --admin --squash\`" \
               --base main \
-              --head "$BRANCH"
-            gh pr merge "$BRANCH" --auto --squash
-            echo "PR opened and auto-merge enabled — will land once CI passes."
+              --head "$BASELINE_BRANCH"
+            gh pr merge "$BASELINE_BRANCH" --auto --squash
+            echo "PR opened and auto-merge enabled — lands once CI passes."
+          else
+            # For any PR branch: push directly. Branch protection only guards main.
+            git commit -m "test(visual): regenerate Linux baselines for ${TARGET_BRANCH} [skip ci]"
+            git push origin HEAD:"$TARGET_BRANCH"
+            echo "Baselines committed directly to ${TARGET_BRANCH}."
           fi
+

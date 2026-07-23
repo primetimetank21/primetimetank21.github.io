@@ -71,7 +71,7 @@ jobs:
       - name: Build for preview
         run: npm run build
 
-      - name: Run E2E smoke tests
+      - name: Run E2E tests (smoke + terminal; excludes visual)
         run: npm run test:e2e
 
       - name: Upload Playwright report
@@ -82,12 +82,15 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
-  visual-advisory:
-    name: Visual Regression (advisory — Linux baselines)
+  visual-regression:
+    # BLOCKING gate — compares against committed Linux baselines.
+    # If baselines are stale (intentional UI change), run:
+    #   Actions → Update Visual Baselines → branch: <your-pr-branch>
+    # This regenerates and commits PNGs to your PR branch; the check then re-runs green.
+    name: Visual Regression (Linux baselines)
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.61.1-noble
-    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -104,8 +107,8 @@ jobs:
       - name: Build for preview
         run: npm run build
 
-      - name: Run visual tests (update-snapshots on first run)
-        run: npm run test:visual:update
+      - name: Run visual regression (compare mode)
+        run: npm run test:visual
 
       - name: Upload visual diff artifacts
         if: always()
@@ -114,3 +117,4 @@ jobs:
           name: visual-snapshots
           path: tests/e2e/__snapshots__/
           retention-days: 14
+
