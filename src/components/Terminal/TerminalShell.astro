@@ -193,11 +193,14 @@ function appendEntry(cmdText: string, lines: string[]): void {
   if (lines.length > 0) {
     const outDiv = document.createElement('div');
     outDiv.className = 'entry-output';
+    // pre-wrap preserves alignment spaces in commands like `help`
+    outDiv.style.whiteSpace = 'pre-wrap';
     for (const line of lines) {
-      const span = document.createElement('span');
-      span.className = 'entry-line';
-      span.textContent = line;
-      outDiv.appendChild(span);
+      // div (not span) so each line is block-level regardless of Astro CSS scoping
+      const lineDiv = document.createElement('div');
+      lineDiv.className = 'entry-line';
+      lineDiv.textContent = line;
+      outDiv.appendChild(lineDiv);
     }
     entry.appendChild(outDiv);
   }
