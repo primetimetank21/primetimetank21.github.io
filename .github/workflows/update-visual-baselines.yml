@@ -50,6 +50,10 @@ jobs:
 
       - name: Commit and push baselines (only when changed)
         run: |
+          # Container runs as a different UID than the checkout user → git
+          # refuses to recognize the working tree ("dubious ownership"). Mark
+          # it safe before any other git command.
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add tests/e2e/__snapshots__/
