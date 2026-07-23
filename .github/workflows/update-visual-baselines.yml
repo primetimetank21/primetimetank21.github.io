@@ -2,23 +2,25 @@ name: Update Visual Baselines
 
 # Manually triggered from the Actions tab.
 # GitHub asks "Run workflow on branch:" — pick the branch you want baselines
-# committed to (default: main). The bot commits directly to that branch.
+# committed to (default: main). The bot generates snapshots in the Playwright
+# container, then opens a PR from a baselines/auto-<run-id> branch. Once CI
+# passes on the PR, it auto-merges to main.
 #
 # ⚠️ Branch protection note:
-#   This workflow pushes directly (not via PR). If you later enable
-#   "Require a pull request before merging" on main, run this workflow
-#   on a feature branch instead and open a PR to land the baseline update.
-#   Current protection (M0) only requires status checks on PRs, so direct
-#   push to main by github-actions[bot] is permitted.
+#   github-actions[bot] cannot push directly to main (required status checks).
+#   Instead this workflow creates a branch, opens a PR, and enables auto-merge.
+#   The PR will merge automatically once the three required checks turn green.
 
 on:
   workflow_dispatch:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
-  update-baselines:
+  # ── Job 1: Run tests inside the Playwright container ──────────────────────
+  generate-baselines:
     name: Regenerate Visual Baselines (Linux)
     runs-on: ubuntu-latest
     # Same pinned image used by build-check.yml visual-advisory job —
@@ -29,9 +31,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          # Write token so the commit-back step can push
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -48,18 +47,51 @@ jobs:
       - name: Regenerate visual baselines
         run: npm run test:visual:update
 
-      - name: Commit and push baselines (only when changed)
+      - name: Upload snapshot artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-snapshots
+          path: tests/e2e/__snapshots__/
+          if-no-files-found: warn
+
+  # ── Job 2: Commit baselines on a plain runner (gh CLI available) ───────────
+  commit-baselines:
+    name: Open baseline-update PR
+    needs: generate-baselines
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Persist credentials so the push and gh pr commands are authenticated.
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download snapshot artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: visual-snapshots
+          path: tests/e2e/__snapshots__/
+
+      - name: Commit and open PR (only when changed)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Container runs as a different UID than the checkout user → git
-          # refuses to recognize the working tree ("dubious ownership"). Mark
-          # it safe before any other git command.
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add tests/e2e/__snapshots__/
           if git diff --staged --quiet; then
             echo "Baselines unchanged — nothing to commit."
           else
+            BRANCH="baselines/auto-${GITHUB_RUN_ID}"
+            git checkout -b "$BRANCH"
             git commit -m "test(visual): regenerate Linux baselines [skip ci]"
-            git push
+            git push origin "$BRANCH"
+            gh pr create \
+              --title "test(visual): regenerate Linux baselines" \
+              --body "Automated baseline update from workflow run \`${GITHUB_RUN_ID}\`. Merge once CI is green." \
+              --base main \
+              --head "$BRANCH"
+            gh pr merge "$BRANCH" --auto --squash
+            echo "PR opened and auto-merge enabled — will land once CI passes."
           fi
