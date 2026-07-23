@@ -3,8 +3,10 @@
  * Importable by both the Astro island script and Vitest unit tests.
  */
 
+import { ABOUT_LINES, formatProjects, SKILLS_LINES, LINKS_LINES } from './content.ts';
+
 /** Sorted list of all known commands */
-export const COMMANDS = ['about', 'clear', 'contact', 'help', 'links', 'projects', 'theme'] as const;
+export const COMMANDS = ['about', 'clear', 'contact', 'help', 'links', 'projects', 'skills', 'tech', 'theme'] as const;
 export type CommandName = (typeof COMMANDS)[number];
 
 // ─── Input normalisation ─────────────────────────────────────────────────────
@@ -67,21 +69,26 @@ export function executeCommand(raw: string): CommandResult {
           "  help      \u2014 show this message",
           "  about     \u2014 who I am",
           "  projects  \u2014 things I've built",
-          "  contact   \u2014 links & contact info",
+          "  skills    \u2014 tech stack  (alias: tech)",
+          "  contact   \u2014 links & contact info  (alias: links)",
           "  theme     \u2014 toggle light / dark theme",
           "  clear     \u2014 clear the terminal",
         ],
       };
 
     case 'about':
-      return { type: 'output', lines: ['[M2] about \u2014 content coming soon.'] };
+      return { type: 'output', lines: [...ABOUT_LINES] };
 
     case 'projects':
-      return { type: 'output', lines: ['[M2] projects \u2014 content coming soon.'] };
+      return { type: 'output', lines: formatProjects() };
+
+    case 'skills':
+    case 'tech':
+      return { type: 'output', lines: [...SKILLS_LINES] };
 
     case 'contact':
     case 'links':
-      return { type: 'output', lines: ['[M2] contact \u2014 content coming soon.'] };
+      return { type: 'output', lines: [...LINKS_LINES] };
 
     case 'clear':
       return { type: 'clear', lines: [] };

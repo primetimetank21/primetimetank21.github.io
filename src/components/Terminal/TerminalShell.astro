@@ -181,6 +181,50 @@ function esc(s: string): string {
     .replace(/"/g, '&quot;');
 }
 
+// ─── Render a single output line (auto-links URLs, styles status tags) ────────
+
+function renderLineContent(el: HTMLElement, text: string): void {
+  // Tokenise: match URLs and [active]/[completed] status tags
+  const tokenRe = /https?:\/\/[^\s]+|\[(?:active|completed)\]/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+
+  while ((m = tokenRe.exec(text)) !== null) {
+    if (m.index > last) {
+      el.appendChild(document.createTextNode(text.slice(last, m.index)));
+    }
+    const token = m[0];
+    if (token.startsWith('http')) {
+      // URL → clickable anchor (opens in new tab)
+      const a = document.createElement('a');
+      a.href = token;
+      a.textContent = token;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.style.color = 'var(--color-info)';
+      a.style.textDecoration = 'underline';
+      a.style.textUnderlineOffset = '2px';
+      a.style.cursor = 'pointer';
+      el.appendChild(a);
+    } else {
+      // Status badge [active] / [completed] — subtle inline label
+      const span = document.createElement('span');
+      span.textContent = token;
+      span.style.fontSize = '0.85em';
+      span.style.color = token === '[active]'
+        ? 'var(--color-success)'
+        : 'var(--color-fg-subtle)';
+      el.appendChild(span);
+    }
+    last = tokenRe.lastIndex;
+  }
+
+  // Remaining plain text after last token (or entire string if no tokens)
+  if (last < text.length) {
+    el.appendChild(document.createTextNode(text.slice(last)));
+  }
+}
+
 // ─── Append entry to scrollback ───────────────────────────────────────────────
 
 function appendEntry(cmdText: string, lines: string[]): void {
@@ -199,13 +243,25 @@ function appendEntry(cmdText: string, lines: string[]): void {
   if (lines.length > 0) {
     const outDiv = document.createElement('div');
     outDiv.className = 'entry-output';
-    // pre-wrap preserves alignment spaces in commands like `help`
+    // Inline styles replicate scoped CSS rules that won't reach dynamic elements
+    outDiv.style.marginTop = 'var(--space-1)';
+    outDiv.style.paddingLeft = 'var(--space-5)';
+    outDiv.style.color = 'var(--color-fg-muted)';
     outDiv.style.whiteSpace = 'pre-wrap';
+
     for (const line of lines) {
-      // div (not span) so each line is block-level regardless of Astro CSS scoping
+      // div (not span) → block by default regardless of Astro CSS scoping
       const lineDiv = document.createElement('div');
       lineDiv.className = 'entry-line';
-      lineDiv.textContent = line;
+      lineDiv.style.wordBreak = 'break-word';
+      lineDiv.style.lineHeight = 'var(--line-height-normal)';
+
+      if (line === '') {
+        // Empty lines collapse without content — NBSP preserves the line height
+        lineDiv.textContent = '\u00a0';
+      } else {
+        renderLineContent(lineDiv, line);
+      }
       outDiv.appendChild(lineDiv);
     }
     entry.appendChild(outDiv);
