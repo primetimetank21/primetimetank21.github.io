@@ -62,9 +62,30 @@ test.describe('terminal interaction', () => {
     await expect(chip).toBeVisible();
   });
 
-  test('mobile tab chip hidden when no ghost text', async ({ page }) => {
+  test('mobile tab chip visible on empty input (seed ghost)', async ({ page }) => {
     const chip = page.locator('#tab-chip');
+    // Seed ghost 'help' is shown on empty input → chip must be visible
+    await expect(chip).toBeVisible();
+  });
+
+  test('mobile tab chip hidden when no match and input is non-empty', async ({ page }) => {
+    const input = page.locator('#terminal-input');
+    const chip = page.locator('#tab-chip');
+    await input.pressSequentially('xyz');
     await expect(chip).toBeHidden();
+  });
+
+  test('Tab on empty input accepts seed "help"', async ({ page }) => {
+    const input = page.locator('#terminal-input');
+    await expect(input).toHaveValue('');
+    await input.press('Tab');
+    await expect(input).toHaveValue('help');
+  });
+
+  test('ArrowRight on empty input accepts seed "help"', async ({ page }) => {
+    const input = page.locator('#terminal-input');
+    await input.press('ArrowRight');
+    await expect(input).toHaveValue('help');
   });
 
   // ── Command execution ──────────────────────────────────────────────────────

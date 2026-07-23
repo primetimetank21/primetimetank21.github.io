@@ -146,11 +146,11 @@ function updateMirror(): void {
   inputTyped.textContent = val;
   inputGhost.textContent = displayGhost;
 
-  // Mobile chip: only show for real (non-seed) completions
-  const hasRealGhost = ghostSuffix !== '' && val !== '';
-  tabChipEl.hidden = !hasRealGhost;
-  if (hasRealGhost) {
-    tabChipEl.setAttribute('aria-label', `Accept: ${full}`);
+  // Show chip whenever there is a visible ghost (seed or real completion)
+  tabChipEl.hidden = displayGhost === '';
+  if (displayGhost !== '') {
+    const acceptTarget = val === '' ? 'help' : full;
+    tabChipEl.setAttribute('aria-label', `Accept: ${acceptTarget}`);
   }
 }
 
@@ -158,6 +158,12 @@ function updateMirror(): void {
 
 function acceptCompletion(): void {
   const val  = inputEl.value;
+  // Empty input → accept the seed ghost ('help')
+  if (val === '') {
+    inputEl.value = 'help';
+    updateMirror();
+    return;
+  }
   const full = getCompletion(val);
   if (full && full.length > val.length) {
     inputEl.value = full;
@@ -252,8 +258,10 @@ inputEl.addEventListener('keydown', (e: KeyboardEvent) => {
     case 'ArrowRight': {
       // Accept only when cursor is at end of input
       if (inputEl.selectionStart === inputEl.value.length) {
-        const full = getCompletion(inputEl.value);
-        if (full && full.length > inputEl.value.length) {
+        const val = inputEl.value;
+        // Seed case: empty input has 'help' as ghost
+        const full = val === '' ? 'help' : getCompletion(val);
+        if (full && full.length > val.length) {
           e.preventDefault();
           acceptCompletion();
         }
