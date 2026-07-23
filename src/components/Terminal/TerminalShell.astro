@@ -1,0 +1,568 @@
+---
+/**
+ * TerminalShell.astro — interactive fake-shell terminal island.
+ *
+ * Renders server-side HTML chrome (title bar, traffic lights, output region,
+ * input line). Client-side <script> hydrates the interaction layer.
+ *
+ * Features:
+ *   - Ghost-text autocomplete (Tab / → to accept; mobile ↹ chip)
+ *   - Seed ghost `help` on empty input (self-documenting)
+ *   - Command history (Up / Down recall)
+ *   - `clear`, `theme`, `help`, `about`, `projects`, `contact` / `links`
+ *   - aria-live="polite" output region
+ *   - Focus management (input focused on mount, ESC clears input)
+ *   - prefers-reduced-motion respected
+ */
+---
+
+<div
+  class="terminal-window"
+  role="region"
+  aria-label="Interactive terminal — type help for available commands"
+  data-testid="terminal-window"
+>
+  <!-- ── Title bar ────────────────────────────────────────────────────────── -->
+  <div class="terminal-titlebar" aria-hidden="true">
+    <div class="terminal-dots">
+      <span class="dot dot-close"  title="Close"></span>
+      <span class="dot dot-min"    title="Minimise"></span>
+      <span class="dot dot-max"    title="Maximise"></span>
+    </div>
+    <span class="terminal-title">primetimetank21 — bash</span>
+    <span class="terminal-title-spacer" aria-hidden="true"></span>
+  </div>
+
+  <!-- ── Terminal body ────────────────────────────────────────────────────── -->
+  <div class="terminal-body">
+
+    <!-- Scrollback output
+         role="log"   — announces appended content to screen readers
+         aria-live    — polite so it doesn't interrupt in-progress speech
+         aria-atomic  — false so individual entries are announced separately
+    -->
+    <div
+      id="terminal-output"
+      class="terminal-output"
+      role="log"
+      aria-live="polite"
+      aria-atomic="false"
+      aria-label="Terminal output"
+      aria-relevant="additions"
+      data-testid="terminal-output"
+    >
+      <!-- Welcome message — server-rendered, no JS needed -->
+      <div class="terminal-entry terminal-entry--system">
+        <span class="entry-line">
+          Welcome to <span class="hl-accent">primetimetank21</span>'s terminal.
+        </span>
+        <span class="entry-line hl-muted">
+          SE2 @ Microsoft &mdash; prototype to production.
+        </span>
+        <span class="entry-line hl-subtle">
+          Type <kbd class="kbd">help</kbd> to get started,
+          or press <kbd class="kbd">Tab</kbd> to accept a suggestion.
+        </span>
+      </div>
+    </div>
+
+    <!-- ── Input line ──────────────────────────────────────────────────────── -->
+    <div
+      id="terminal-input-line"
+      class="terminal-input-line"
+      aria-label="Terminal prompt"
+    >
+      <span class="prompt" aria-hidden="true">❯</span>
+
+      <!--
+        Grid-stacking trick:
+        .input-wrap uses display:grid so .input-mirror and .real-input
+        share the same cell. The mirror defines the visual; the input
+        (transparent text, visible caret) sits on top and captures events.
+      -->
+      <div class="input-wrap">
+        <!-- Visual mirror: typed text + ghost suffix -->
+        <div class="input-mirror" id="input-mirror" aria-hidden="true">
+          <span id="input-typed" class="input-typed"></span><span
+            id="input-ghost"
+            class="input-ghost"
+          ></span>
+        </div>
+
+        <!-- Real input — captures all keyboard events -->
+        <input
+          id="terminal-input"
+          type="text"
+          class="real-input"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
+          enterkeyhint="send"
+          aria-label="Terminal command input. Type help for available commands. Use Tab or right arrow to accept autocomplete, Up and Down arrows for history, Escape to clear."
+          aria-describedby="terminal-output"
+          data-testid="terminal-input"
+        />
+      </div>
+
+      <!-- Mobile tap-to-accept chip — hidden until ghost text is active -->
+      <button
+        id="tab-chip"
+        class="tab-chip"
+        type="button"
+        tabindex="-1"
+        aria-label="Accept autocomplete suggestion"
+        hidden
+      >↹</button>
+    </div>
+
+  </div><!-- /terminal-body -->
+</div><!-- /terminal-window -->
+
+<script>
+import { executeCommand, getCompletion, TerminalHistory } from '../../lib/terminal.ts';
+
+// ─── DOM references ──────────────────────────────────────────────────────────
+const outputEl    = document.getElementById('terminal-output') as HTMLDivElement;
+const inputEl     = document.getElementById('terminal-input')  as HTMLInputElement;
+const inputTyped  = document.getElementById('input-typed')     as HTMLSpanElement;
+const inputGhost  = document.getElementById('input-ghost')     as HTMLSpanElement;
+const tabChipEl   = document.getElementById('tab-chip')        as HTMLButtonElement;
+
+const history = new TerminalHistory();
+
+// ─── Mirror update ───────────────────────────────────────────────────────────
+
+function updateMirror(): void {
+  const val  = inputEl.value;
+  const full = getCompletion(val);
+
+  // Ghost suffix = the portion after what's already typed
+  const ghostSuffix = (full.length > val.length) ? full.slice(val.length) : '';
+
+  // Seed ghost: show 'help' when input is completely empty (discoverability)
+  const displayGhost = val === '' ? 'help' : ghostSuffix;
+
+  inputTyped.textContent = val;
+  inputGhost.textContent = displayGhost;
+
+  // Mobile chip: only show for real (non-seed) completions
+  const hasRealGhost = ghostSuffix !== '' && val !== '';
+  tabChipEl.hidden = !hasRealGhost;
+  if (hasRealGhost) {
+    tabChipEl.setAttribute('aria-label', `Accept: ${full}`);
+  }
+}
+
+// ─── Accept completion ────────────────────────────────────────────────────────
+
+function acceptCompletion(): void {
+  const val  = inputEl.value;
+  const full = getCompletion(val);
+  if (full && full.length > val.length) {
+    inputEl.value = full;
+    updateMirror();
+  }
+}
+
+// ─── Escape HTML ─────────────────────────────────────────────────────────────
+
+function esc(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ─── Append entry to scrollback ───────────────────────────────────────────────
+
+function appendEntry(cmdText: string, lines: string[]): void {
+  const entry = document.createElement('div');
+  entry.className = 'terminal-entry';
+
+  // Command echo line
+  const cmdLine = document.createElement('div');
+  cmdLine.className = 'entry-command';
+  cmdLine.innerHTML =
+    `<span class="entry-prompt" aria-hidden="true">❯</span>` +
+    `<span class="entry-cmd">${esc(cmdText)}</span>`;
+  entry.appendChild(cmdLine);
+
+  // Output lines
+  if (lines.length > 0) {
+    const outDiv = document.createElement('div');
+    outDiv.className = 'entry-output';
+    for (const line of lines) {
+      const span = document.createElement('span');
+      span.className = 'entry-line';
+      span.textContent = line;
+      outDiv.appendChild(span);
+    }
+    entry.appendChild(outDiv);
+  }
+
+  outputEl.appendChild(entry);
+
+  // Autoscroll to bottom
+  outputEl.scrollTop = outputEl.scrollHeight;
+}
+
+// ─── Submit ───────────────────────────────────────────────────────────────────
+
+function handleSubmit(): void {
+  const raw     = inputEl.value;
+  const trimmed = raw.trim();
+  if (!trimmed) return;
+
+  history.push(trimmed);
+
+  const result = executeCommand(trimmed);
+
+  if (result.type === 'clear') {
+    while (outputEl.firstChild) {
+      outputEl.removeChild(outputEl.firstChild);
+    }
+  } else if (result.type === 'theme') {
+    appendEntry(trimmed, []);
+    window.dispatchEvent(new CustomEvent('toggle-theme'));
+  } else {
+    appendEntry(trimmed, result.lines);
+  }
+
+  inputEl.value = '';
+  updateMirror();
+  inputEl.focus();
+}
+
+// ─── Keyboard handler ─────────────────────────────────────────────────────────
+
+inputEl.addEventListener('input', updateMirror);
+
+inputEl.addEventListener('keydown', (e: KeyboardEvent) => {
+  switch (e.key) {
+    case 'Tab': {
+      e.preventDefault();
+      acceptCompletion();
+      break;
+    }
+    case 'ArrowRight': {
+      // Accept only when cursor is at end of input
+      if (inputEl.selectionStart === inputEl.value.length) {
+        const full = getCompletion(inputEl.value);
+        if (full && full.length > inputEl.value.length) {
+          e.preventDefault();
+          acceptCompletion();
+        }
+      }
+      break;
+    }
+    case 'Enter': {
+      e.preventDefault();
+      handleSubmit();
+      break;
+    }
+    case 'ArrowUp': {
+      e.preventDefault();
+      const prev = history.up();
+      if (prev !== null) {
+        inputEl.value = prev;
+        // Move cursor to end after React-style batching
+        requestAnimationFrame(() => {
+          inputEl.setSelectionRange(prev.length, prev.length);
+        });
+        updateMirror();
+      }
+      break;
+    }
+    case 'ArrowDown': {
+      e.preventDefault();
+      const next = history.down();
+      if (next !== null) {
+        inputEl.value = next;
+        updateMirror();
+      }
+      break;
+    }
+    case 'Escape': {
+      inputEl.value = '';
+      updateMirror();
+      history.reset();
+      break;
+    }
+  }
+});
+
+// ─── Mobile tab chip ──────────────────────────────────────────────────────────
+
+tabChipEl.addEventListener('click', () => {
+  acceptCompletion();
+  inputEl.focus();
+});
+
+// ─── Click terminal body → focus input ───────────────────────────────────────
+
+document.querySelector('.terminal-body')?.addEventListener('click', (e: Event) => {
+  if (!(e.target as Element).closest('.tab-chip')) {
+    inputEl.focus();
+  }
+});
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+
+updateMirror();
+// Focus after a frame to ensure layout is settled
+requestAnimationFrame(() => inputEl.focus());
+</script>
+
+<style>
+/* ─── Terminal window chrome ──────────────────────────────────────────────── */
+.terminal-window {
+  width: 100%;
+  max-width: var(--terminal-max-width);
+  min-height: var(--terminal-min-height);
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+/* ─── Title bar ──────────────────────────────────────────────────────────── */
+.terminal-titlebar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0 var(--terminal-padding-x);
+  height: var(--terminal-titlebar-h);
+  background: var(--color-bg-popup);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.terminal-dots {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.dot {
+  display: block;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+.dot-close { background: var(--color-dot-close); }
+.dot-min   { background: var(--color-dot-min);   }
+.dot-max   { background: var(--color-dot-max);   }
+
+.terminal-title {
+  flex: 1;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--color-fg-subtle);
+  user-select: none;
+  letter-spacing: 0.02em;
+  /* Push title to visual center accounting for dots */
+  margin-right: calc(3 * 0.75rem + 2 * var(--space-2));
+}
+
+.terminal-title-spacer {
+  width: calc(3 * 0.75rem + 2 * var(--space-2));
+  flex-shrink: 0;
+}
+
+/* ─── Terminal body ──────────────────────────────────────────────────────── */
+.terminal-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: var(--terminal-padding-y) var(--terminal-padding-x);
+  font-family: var(--font-mono);
+  font-size: var(--terminal-font-size);
+  line-height: var(--line-height-mono);
+  overflow: hidden;
+  cursor: text;
+}
+
+/* ─── Output scrollback ──────────────────────────────────────────────────── */
+.terminal-output {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  padding-bottom: var(--space-2);
+}
+
+.terminal-entry {
+  margin-bottom: var(--space-3);
+}
+
+.terminal-entry--system {
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.entry-line {
+  display: block;
+  word-break: break-word;
+}
+
+.entry-command {
+  display: flex;
+  gap: var(--space-2);
+  color: var(--color-fg);
+}
+
+.entry-prompt {
+  color: var(--color-prompt);
+  flex-shrink: 0;
+}
+
+.entry-cmd {
+  color: var(--color-accent);
+}
+
+.entry-output {
+  margin-top: var(--space-1);
+  padding-left: var(--space-5);
+  color: var(--color-fg-muted);
+}
+
+.entry-output .entry-line {
+  line-height: var(--line-height-normal);
+}
+
+/* ─── Highlighting helpers ───────────────────────────────────────────────── */
+.hl-accent { color: var(--color-accent); }
+.hl-muted  { color: var(--color-fg-muted); }
+.hl-subtle { color: var(--color-fg-subtle); margin-top: var(--space-2); }
+.kbd {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: var(--color-bg-popup);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-1);
+  color: var(--color-info);
+}
+
+/* ─── Input line ─────────────────────────────────────────────────────────── */
+.terminal-input-line {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border-subtle);
+  flex-shrink: 0;
+}
+
+.prompt {
+  color: var(--color-prompt);
+  font-family: var(--font-mono);
+  font-size: var(--terminal-font-size);
+  flex-shrink: 0;
+  user-select: none;
+}
+
+/* ─── Input wrap (grid-stack: mirror + real-input share one cell) ────────── */
+.input-wrap {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+}
+
+.input-wrap > * {
+  grid-area: 1 / 1; /* Stack all children in the same grid cell */
+}
+
+.input-mirror {
+  font-family: var(--font-mono);
+  font-size: var(--terminal-font-size);
+  line-height: var(--line-height-mono);
+  white-space: pre;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  padding: 0.125rem 0;
+  /* Min height so the row doesn't collapse when empty */
+  min-height: calc(var(--terminal-font-size) * var(--line-height-mono) + 0.25rem);
+}
+
+.input-typed {
+  color: var(--color-fg);
+}
+
+.input-ghost {
+  color: var(--color-ghost);
+  opacity: 0.7;
+}
+
+.real-input {
+  font-family: var(--font-mono);
+  font-size: var(--terminal-font-size);
+  line-height: var(--line-height-mono);
+  padding: 0.125rem 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  /* Transparent text — visual rendering handled by .input-mirror */
+  color: transparent;
+  caret-color: var(--color-cursor);
+  width: 100%;
+  min-width: 0;
+  /* Prevent layout shift from scrolling offset; mirror handles overflow */
+  overflow: hidden;
+}
+
+/* ─── Mobile tab chip ────────────────────────────────────────────────────── */
+.tab-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  background: var(--color-bg-popup);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-info);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  /* Visible only when ghost text is active (toggled via hidden attr) */
+}
+
+.tab-chip:hover {
+  background: var(--color-bg-elevated);
+  border-color: var(--color-accent);
+}
+
+/* ─── Reduced-motion: no input blink from caret ──────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .real-input {
+    caret-color: var(--color-cursor);
+  }
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .terminal-window {
+    border-radius: var(--radius-lg);
+    min-height: 60dvh;
+  }
+
+  .terminal-title {
+    font-size: calc(var(--font-size-xs) * 0.9);
+  }
+
+  .terminal-body {
+    padding: var(--terminal-padding-y) var(--space-3);
+  }
+}
+</style>

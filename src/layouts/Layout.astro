@@ -1,0 +1,199 @@
+---
+/**
+ * Layout.astro — base page shell
+ *
+ * Responsibilities:
+ *   - No-FOUC theme injection (inline script, runs before paint)
+ *   - CSS token + global style imports
+ *   - Self-hosted JetBrains Mono via @fontsource
+ *   - Theme toggle event listener (centralised; dispatched by ThemeToggle + terminal `theme` command)
+ *   - Slot regions for page content
+ */
+import '@fontsource/jetbrains-mono/400.css';
+import '@fontsource/jetbrains-mono/700.css';
+import '../styles/tokens.css';
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'primetimetank21 — Portfolio',
+  description = 'Terminal-style personal portfolio of primetimetank21. SE2 @ Microsoft. Prototype to production.',
+} = Astro.props;
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+
+    <!--
+      No-FOUC: set [data-theme] synchronously before first paint.
+      Priority: localStorage > prefers-color-scheme > dark default.
+      is:inline = inlined verbatim, no bundling/deferral.
+    -->
+    <script is:inline>
+      (function () {
+        try {
+          var stored = localStorage.getItem('theme');
+          var preferred = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          document.documentElement.dataset.theme = stored || preferred;
+        } catch (_) {
+          document.documentElement.dataset.theme = 'dark';
+        }
+      })();
+    </script>
+  </head>
+
+  <body>
+    <!-- Skip-to-content link for keyboard users -->
+    <a href="#main-content" class="skip-link">Skip to content</a>
+
+    <header class="site-header">
+      <nav class="site-nav" aria-label="Site navigation">
+        <span class="site-logo" aria-label="primetimetank21">
+          <span class="prompt-glyph" aria-hidden="true">❯</span>
+          <span class="site-name">primetimetank21</span>
+        </span>
+        <slot name="nav-extra" />
+      </nav>
+      <slot name="header-actions" />
+    </header>
+
+    <main id="main-content">
+      <slot />
+    </main>
+
+    <!-- Section slots for M2 content (about, projects, links) -->
+    <section id="about" aria-label="About" hidden>
+      <slot name="about" />
+    </section>
+    <section id="projects" aria-label="Projects" hidden>
+      <slot name="projects" />
+    </section>
+    <section id="links" aria-label="Links" hidden>
+      <slot name="links" />
+    </section>
+
+    <footer class="site-footer" aria-label="Site footer">
+      <slot name="footer">
+        <p class="footer-text">
+          <span aria-hidden="true">❯</span>
+          Built with <a href="https://astro.build" rel="noopener noreferrer" target="_blank">Astro</a>
+          &amp; <a href="https://github.com/primetimetank21" rel="noopener noreferrer" target="_blank">primetimetank21</a>
+        </p>
+      </slot>
+    </footer>
+  </body>
+</html>
+
+<script>
+  /**
+   * Centralised theme toggle handler.
+   * Dispatched by: ThemeToggle button, terminal `theme` command.
+   */
+  window.addEventListener('toggle-theme', () => {
+    const current = document.documentElement.dataset.theme ?? 'dark';
+    const next = current === 'dark' ? 'light' : 'dark';
+
+    const apply = () => {
+      document.documentElement.dataset.theme = next;
+      try { localStorage.setItem('theme', next); } catch (_) { /* storage blocked */ }
+    };
+
+    if (typeof document.startViewTransition === 'function') {
+      document.startViewTransition(apply);
+    } else {
+      apply();
+    }
+  });
+</script>
+
+<style is:global>
+  /* ─── Skip link ─────────────────────────────────────────────────────────── */
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: var(--space-2);
+    z-index: 1000;
+    padding: var(--space-2) var(--space-4);
+    background: var(--color-accent);
+    color: var(--color-bg);
+    border-radius: var(--radius-md);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-sm);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .skip-link:focus-visible {
+    left: var(--space-4);
+    outline: 2px solid var(--color-bg);
+    outline-offset: 2px;
+  }
+
+  /* ─── Site header ────────────────────────────────────────────────────────── */
+  .site-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-4) var(--space-6);
+    border-bottom: 1px solid var(--color-border-subtle);
+  }
+
+  .site-nav {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+  }
+
+  .site-logo {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-sm);
+    color: var(--color-fg-muted);
+    letter-spacing: 0.02em;
+    user-select: none;
+  }
+
+  .site-logo .prompt-glyph {
+    color: var(--color-prompt);
+    margin-right: var(--space-1);
+  }
+
+  /* ─── Main ────────────────────────────────────────────────────────────────── */
+  main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--space-8) var(--space-4);
+    min-height: calc(100dvh - 4rem - 3rem); /* viewport minus header + footer */
+  }
+
+  /* ─── Footer ─────────────────────────────────────────────────────────────── */
+  .site-footer {
+    padding: var(--space-4) var(--space-6);
+    border-top: 1px solid var(--color-border-subtle);
+    text-align: center;
+  }
+
+  .footer-text {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    color: var(--color-fg-subtle);
+  }
+
+  .footer-text a {
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+  .footer-text a:hover {
+    text-decoration: underline;
+  }
+</style>
