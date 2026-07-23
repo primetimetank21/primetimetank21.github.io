@@ -1,21 +1,43 @@
 ---
-
+import Layout from '../layouts/Layout.astro';
+import ThemeToggle from '../components/ThemeToggle.astro';
+import TerminalShell from '../components/Terminal/TerminalShell.astro';
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>primetimetank21 — Portfolio</title>
-		<meta name="description" content="Terminal-style personal portfolio of primetimetank21. SE2 @ Microsoft. Prototype to production." />
-	</head>
-	<body>
-		<main>
-			<h1>primetimetank21.github.io</h1>
-			<p>M0 scaffold — site coming soon.</p>
-		</main>
-	</body>
-</html>
+<Layout>
+  <!-- Theme toggle in header -->
+  <ThemeToggle slot="header-actions" />
+
+  <section class="hero" aria-label="Terminal hero">
+    <h1 class="hero-heading sr-only">primetimetank21 — Interactive Portfolio Terminal</h1>
+    <TerminalShell />
+  </section>
+
+  <!--
+    M2 content slots — structural scaffolding only.
+    Real content (about, projects, links) goes here in M2.
+  -->
+</Layout>
+
+<style>
+  .hero {
+    width: 100%;
+    max-width: var(--terminal-max-width);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* Visually hidden but accessible to screen readers */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+</style>
