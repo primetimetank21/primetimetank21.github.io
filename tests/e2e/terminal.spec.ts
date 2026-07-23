@@ -90,6 +90,57 @@ test.describe('terminal interaction', () => {
 
   // ── Command execution ──────────────────────────────────────────────────────
 
+  test('about command shows real content', async ({ page }) => {
+    const input = page.locator('#terminal-input');
+    const output = page.locator('#terminal-output');
+    await input.pressSequentially('about');
+    await input.press('Enter');
+    await expect(output).toContainText('Microsoft');
+    await expect(output).toContainText('MAIDAP');
+  });
+
+  test('projects command shows real projects with GitHub links', async ({ page }) => {
+    const input = page.locator('#terminal-input');
+    const output = page.locator('#terminal-output');
+    await input.pressSequentially('projects');
+    await input.press('Enter');
+    await expect(output).toContainText('github.com');
+  });
+
+  test('skills command shows tech stack', async ({ page }) => {
+    const input = page.locator('#terminal-input');
+    const output = page.locator('#terminal-output');
+    await input.pressSequentially('skills');
+    await input.press('Enter');
+    await expect(output).toContainText('Python');
+    await expect(output).toContainText('TypeScript');
+  });
+
+  test('tech command is alias for skills', async ({ page }) => {
+    const input = page.locator('#terminal-input');
+    const output = page.locator('#terminal-output');
+    await input.pressSequentially('tech');
+    await input.press('Enter');
+    await expect(output).toContainText('Python');
+  });
+
+  test('links command shows real links', async ({ page }) => {
+    const input = page.locator('#terminal-input');
+    const output = page.locator('#terminal-output');
+    await input.pressSequentially('links');
+    await input.press('Enter');
+    await expect(output).toContainText('github.com/primetimetank21');
+    await expect(output).toContainText('linkedin.com');
+  });
+
+  test('contact command shows real links', async ({ page }) => {
+    const input = page.locator('#terminal-input');
+    const output = page.locator('#terminal-output');
+    await input.pressSequentially('contact');
+    await input.press('Enter');
+    await expect(output).toContainText('github.com/primetimetank21');
+  });
+
   test('typing help + Enter shows output', async ({ page }) => {
     const input = page.locator('#terminal-input');
     const output = page.locator('#terminal-output');

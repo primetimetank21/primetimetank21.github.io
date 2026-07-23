@@ -124,9 +124,58 @@ describe('executeCommand', () => {
     const text = executeCommand('help').lines.join('\n');
     expect(text).toContain('about');
     expect(text).toContain('projects');
+    expect(text).toContain('skills');
     expect(text).toContain('contact');
     expect(text).toContain('theme');
     expect(text).toContain('clear');
+  });
+
+  it('about command returns real content (not placeholder)', () => {
+    const r = executeCommand('about');
+    expect(r.type).toBe('output');
+    const text = r.lines.join('\n');
+    expect(text).not.toContain('[M2]');
+    expect(text).toContain('Microsoft');
+    expect(text).toContain('MAIDAP');
+  });
+
+  it('projects command returns real content (not placeholder)', () => {
+    const r = executeCommand('projects');
+    expect(r.type).toBe('output');
+    const text = r.lines.join('\n');
+    expect(text).not.toContain('[M2]');
+    expect(text).toContain('github.com');
+  });
+
+  it('skills command routes to output type with tech stack content', () => {
+    const r = executeCommand('skills');
+    expect(r.type).toBe('output');
+    const text = r.lines.join('\n');
+    expect(text).toContain('Python');
+    expect(text).toContain('TypeScript');
+  });
+
+  it('tech command is an alias for skills', () => {
+    const skills = executeCommand('skills');
+    const tech = executeCommand('tech');
+    expect(tech.type).toBe('output');
+    expect(tech.lines).toEqual(skills.lines);
+  });
+
+  it('contact command returns real links', () => {
+    const r = executeCommand('contact');
+    expect(r.type).toBe('output');
+    const text = r.lines.join('\n');
+    expect(text).not.toContain('[M2]');
+    expect(text).toContain('github.com/primetimetank21');
+    expect(text).toContain('linkedin.com');
+  });
+
+  it('links command returns same output as contact', () => {
+    const contact = executeCommand('contact');
+    const links = executeCommand('links');
+    expect(links.type).toBe('output');
+    expect(links.lines).toEqual(contact.lines);
   });
 
   it('routes `about` to output type', () => {
