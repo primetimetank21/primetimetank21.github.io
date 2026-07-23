@@ -1,0 +1,114 @@
+/* global.css — base reset, @font-face declarations, body defaults */
+
+/* ─── @font-face — JetBrains Mono (self-hosted via @fontsource) ──────────── */
+/* Imported via Layout.astro frontmatter using the @fontsource npm package.   */
+/* The @import statements live in Layout.astro so Vite/Astro bundles them.    */
+
+/* ─── Honour HTML `hidden` attribute even when display is explicitly set ─────── */
+[hidden] {
+  display: none !important;
+}
+
+/* ─── Box model reset ────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ─── Root / body ────────────────────────────────────────────────────────── */
+html {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  line-height: var(--line-height-mono);
+  background-color: var(--color-bg);
+  color: var(--color-fg);
+  /* Smooth theme transitions via View Transitions API */
+  transition:
+    background-color var(--duration-normal) var(--easing-default),
+    color var(--duration-normal) var(--easing-default);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  min-height: 100dvh;
+  background-color: var(--color-bg);
+  color: var(--color-fg);
+}
+
+/* ─── View Transitions — theme toggle animation ──────────────────────────── */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--duration-normal);
+  animation-timing-function: var(--easing-default);
+}
+
+/* Instant transitions for reduced-motion users */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    transition: none;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.001ms !important;
+    animation-delay: 0ms !important;
+  }
+
+  /* Also suppress cursor blink */
+  .terminal-cursor {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}
+
+/* ─── Focus visible ──────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ─── Scrollbar ──────────────────────────────────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar-track);
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--color-scrollbar-track); }
+::-webkit-scrollbar-thumb {
+  background: var(--color-scrollbar-thumb);
+  border-radius: var(--radius-full);
+}
+
+/* ─── Selection ──────────────────────────────────────────────────────────── */
+::selection {
+  background-color: var(--color-selection-bg);
+  color: var(--color-fg);
+}
+
+/* ─── Typography helpers ─────────────────────────────────────────────────── */
+code, kbd, pre, samp {
+  font-family: var(--font-mono);
+  font-size: inherit;
+}
+
+/* ─── Cursor blink animation ─────────────────────────────────────────────── */
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+.terminal-cursor {
+  display: inline-block;
+  width: 0.55em;
+  height: 1.1em;
+  background-color: var(--color-cursor);
+  vertical-align: text-bottom;
+  animation: cursor-blink 1s step-end infinite;
+}

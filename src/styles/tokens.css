@@ -1,0 +1,141 @@
+/*
+ * Design tokens — CSS custom properties
+ *
+ * Two themes: dark = Tokyo Night, light = Tokyo Night Day.
+ * Both are first-class. Toggle via [data-theme] on <html>.
+ *
+ * Token layers:
+ *   1. Shared (theme-independent): typography, spacing, radii, motion
+ *   2. Palette: raw colour values per theme
+ *   3. Semantic: named roles (bg, fg, accent …) that map to palette
+ */
+
+/* ─── 1. Shared tokens ────────────────────────────────────────────────────── */
+:root {
+  /* Typography */
+  --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', 'SF Mono', ui-monospace, monospace;
+  --font-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --font-size-xs:   0.6875rem;  /* 11 px */
+  --font-size-sm:   0.8125rem;  /* 13 px */
+  --font-size-base: 0.9375rem;  /* 15 px */
+  --font-size-md:   1rem;       /* 16 px */
+  --font-size-lg:   1.125rem;   /* 18 px */
+  --font-size-xl:   1.25rem;    /* 20 px */
+  --font-size-2xl:  1.5rem;     /* 24 px */
+  --font-size-3xl:  1.875rem;   /* 30 px */
+
+  --line-height-tight:  1.25;
+  --line-height-normal: 1.6;
+  --line-height-mono:   1.5;
+
+  /* Spacing (4-point grid) */
+  --space-1:  0.25rem;   /*  4 px */
+  --space-2:  0.5rem;    /*  8 px */
+  --space-3:  0.75rem;   /* 12 px */
+  --space-4:  1rem;      /* 16 px */
+  --space-5:  1.25rem;   /* 20 px */
+  --space-6:  1.5rem;    /* 24 px */
+  --space-8:  2rem;      /* 32 px */
+  --space-10: 2.5rem;    /* 40 px */
+  --space-12: 3rem;      /* 48 px */
+  --space-16: 4rem;      /* 64 px */
+  --space-20: 5rem;      /* 80 px */
+  --space-24: 6rem;      /* 96 px */
+
+  /* Border radius */
+  --radius-sm:   0.25rem;
+  --radius-md:   0.375rem;
+  --radius-lg:   0.5rem;
+  --radius-xl:   0.75rem;
+  --radius-2xl:  1rem;
+  --radius-full: 9999px;
+
+  /* Motion */
+  --duration-instant: 0ms;
+  --duration-fast:    120ms;
+  --duration-normal:  250ms;
+  --duration-slow:    400ms;
+  --easing-default:   cubic-bezier(0.4, 0, 0.2, 1);
+  --easing-spring:    cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Terminal geometry */
+  --terminal-max-width:    860px;
+  --terminal-min-height:   420px;
+  --terminal-titlebar-h:   2.25rem;
+  --terminal-padding-x:    var(--space-5);
+  --terminal-padding-y:    var(--space-4);
+  --terminal-font-size:    var(--font-size-base);
+}
+
+/* ─── 2 + 3. Dark theme — Tokyo Night ────────────────────────────────────── */
+:root,
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* Semantic colour tokens */
+  --color-bg:           #1a1b26;
+  --color-bg-elevated:  #24283b;
+  --color-bg-popup:     #16161e;
+  --color-fg:           #c0caf5;
+  --color-fg-muted:     #a9b1d6;
+  --color-fg-subtle:    #565f89;
+
+  --color-accent:       #7aa2f7;   /* blue */
+  --color-accent-alt:   #bb9af7;   /* purple */
+  --color-success:      #9ece6a;   /* green */
+  --color-warning:      #e0af68;   /* yellow */
+  --color-error:        #f7768e;   /* red */
+  --color-info:         #7dcfff;   /* cyan */
+
+  --color-prompt:       #9ece6a;   /* green — prompt glyph */
+  --color-ghost:        #565f89;   /* dim ghost-text */
+  --color-cursor:       #c0caf5;
+  --color-selection-bg: #33467c;
+
+  --color-border:        #3b4261;
+  --color-border-subtle: #24283b;
+
+  /* Terminal traffic-light dots */
+  --color-dot-close: #f7768e;
+  --color-dot-min:   #e0af68;
+  --color-dot-max:   #9ece6a;
+
+  /* Scrollbar */
+  --color-scrollbar-thumb: #3b4261;
+  --color-scrollbar-track: transparent;
+}
+
+/* ─── 2 + 3. Light theme — Tokyo Night Day ───────────────────────────────── */
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --color-bg:           #e1e2e7;
+  --color-bg-elevated:  #d0d5e3;
+  --color-bg-popup:     #c4c8da;
+  --color-fg:           #3760bf;
+  --color-fg-muted:     #6172b0;
+  --color-fg-subtle:    #848cb8;
+
+  --color-accent:       #2e7de9;   /* blue */
+  --color-accent-alt:   #9854f1;   /* purple */
+  --color-success:      #587539;   /* green */
+  --color-warning:      #8c6c3e;   /* yellow */
+  --color-error:        #f52a65;   /* red */
+  --color-info:         #0f4b6e;   /* cyan */
+
+  --color-prompt:       #587539;
+  --color-ghost:        #848cb8;
+  --color-cursor:       #3760bf;
+  --color-selection-bg: #b6bfe2;
+
+  --color-border:        #9ea0af;
+  --color-border-subtle: #d0d5e3;
+
+  --color-dot-close: #f52a65;
+  --color-dot-min:   #8c6c3e;
+  --color-dot-max:   #587539;
+
+  --color-scrollbar-thumb: #9ea0af;
+  --color-scrollbar-track: transparent;
+}
