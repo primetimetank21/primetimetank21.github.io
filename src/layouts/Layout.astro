@@ -6,6 +6,7 @@
  *   - No-FOUC theme injection (inline script, runs before paint)
  *   - CSS token + global style imports
  *   - Self-hosted JetBrains Mono via @fontsource
+ *   - Full SEO / OG / Twitter meta tags
  *   - Theme toggle event listener (centralised; dispatched by ThemeToggle + terminal `theme` command)
  *   - Slot regions for page content
  */
@@ -17,11 +18,17 @@ import '../styles/global.css';
 interface Props {
   title?: string;
   description?: string;
+  ogImage?: string;
+  canonicalURL?: string;
 }
+
+const siteURL = 'https://primetimetank21.github.io';
 
 const {
   title = 'primetimetank21 — Portfolio',
-  description = 'Terminal-style personal portfolio of primetimetank21. SWE @ Microsoft. Prototype to production.',
+  description = 'Terminal-style personal portfolio. SWE @ Microsoft — prototype to production. Built with Astro, GSAP, and Tokyo Night.',
+  ogImage = `${siteURL}/og-image.svg`,
+  canonicalURL = siteURL,
 } = Astro.props;
 ---
 
@@ -30,10 +37,38 @@ const {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
+
+    <!-- Primary meta -->
     <title>{title}</title>
     <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL} />
+
+    <!-- Theme colour — adapts to OS preference before JS runs -->
+    <meta name="theme-color" content="#1a1b26" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#e1e2e7" media="(prefers-color-scheme: light)" />
+
+    <!-- Open Graph -->
+    <meta property="og:type"         content="website" />
+    <meta property="og:url"          content={canonicalURL} />
+    <meta property="og:site_name"    content="primetimetank21" />
+    <meta property="og:title"        content={title} />
+    <meta property="og:description"  content={description} />
+    <meta property="og:image"        content={ogImage} />
+    <meta property="og:image:width"  content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt"    content="primetimetank21 terminal portfolio — SWE @ Microsoft, prototype to production" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card"        content="summary_large_image" />
+    <meta name="twitter:title"       content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image"       content={ogImage} />
+    <meta name="twitter:image:alt"   content="primetimetank21 terminal portfolio" />
+
+    <!-- Favicons -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" href="/favicon.ico" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.svg" />
 
     <!--
       No-FOUC: set [data-theme] synchronously before first paint.
@@ -185,7 +220,7 @@ const {
   .footer-text {
     font-family: var(--font-mono);
     font-size: var(--font-size-xs);
-    color: var(--color-fg-subtle);
+    color: var(--color-fg-muted);
   }
 
   .footer-text a {

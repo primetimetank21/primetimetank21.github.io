@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <!-- Background — Tokyo Night -->
+  <rect width="1200" height="630" fill="#1a1b26"/>
+
+  <!-- Subtle grid lines -->
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#24283b" stroke-width="0.5"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="630" fill="url(#grid)" opacity="0.5"/>
+
+  <!-- Terminal window frame -->
+  <rect x="80" y="60" width="1040" height="490" rx="12" fill="#24283b" stroke="#3b4261" stroke-width="1.5"/>
+
+  <!-- Title bar -->
+  <rect x="80" y="60" width="1040" height="46" rx="12" fill="#16161e"/>
+  <rect x="80" y="88" width="1040" height="18" fill="#16161e"/>
+  <line x1="80" y1="106" x2="1120" y2="106" stroke="#3b4261" stroke-width="1"/>
+
+  <!-- Traffic light dots -->
+  <circle cx="122" cy="83" r="7" fill="#f7768e"/>
+  <circle cx="148" cy="83" r="7" fill="#e0af68"/>
+  <circle cx="174" cy="83" r="7" fill="#9ece6a"/>
+
+  <!-- Window title -->
+  <text x="600" y="88" text-anchor="middle" fill="#565f89" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="13" letter-spacing="0.04em">primetimetank21 — bash</text>
+
+  <!-- ── Terminal content ── -->
+
+  <!-- Row 1: prompt + name -->
+  <text x="120" y="175" fill="#9ece6a" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="30" font-weight="600">❯</text>
+  <text x="162" y="175" fill="#7aa2f7" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="44" font-weight="700" letter-spacing="-0.01em">primetimetank21</text>
+
+  <!-- Row 2: tagline -->
+  <text x="120" y="230" fill="#a9b1d6" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="20">SWE @ Microsoft · prototype to production</text>
+
+  <!-- Separator -->
+  <line x1="120" y1="260" x2="1080" y2="260" stroke="#3b4261" stroke-width="1"/>
+
+  <!-- Row 3: help command -->
+  <text x="120" y="305" fill="#9ece6a" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="20">❯</text>
+  <text x="154" y="305" fill="#c0caf5" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="20">help</text>
+
+  <!-- Help output lines -->
+  <text x="154" y="340" fill="#565f89" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="16">Available commands:</text>
+  <text x="174" y="368" fill="#7dcfff" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="15">about</text>
+  <text x="270" y="368" fill="#a9b1d6" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="15">— who I am</text>
+  <text x="174" y="390" fill="#7dcfff" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="15">projects</text>
+  <text x="270" y="390" fill="#a9b1d6" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="15">— what I've built</text>
+  <text x="174" y="412" fill="#7dcfff" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="15">skills</text>
+  <text x="270" y="412" fill="#a9b1d6" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="15">— my tech stack</text>
+  <text x="174" y="434" fill="#7dcfff" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="15">links</text>
+  <text x="270" y="434" fill="#a9b1d6" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="15">— find me online</text>
+
+  <!-- Row 4: cursor line -->
+  <text x="120" y="478" fill="#9ece6a" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="20">❯</text>
+  <rect x="154" y="460" width="12" height="20" fill="#c0caf5" opacity="0.8"/>
+
+  <!-- Footer label -->
+  <text x="600" y="570" text-anchor="middle" fill="#3b4261" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="13" letter-spacing="0.06em">primetimetank21.github.io · Built with Astro · Tokyo Night</text>
+</svg>

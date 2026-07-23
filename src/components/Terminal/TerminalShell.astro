@@ -710,6 +710,18 @@ requestAnimationFrame(() => inputEl.focus());
 
   .terminal-body {
     padding: var(--terminal-padding-y) var(--space-3);
+    font-size: var(--font-size-sm);
+  }
+
+  /* Prevent iOS viewport zoom on input focus (triggers when font-size < 16px) */
+  .real-input {
+    font-size: 1rem;
+  }
+
+  /* Minimum 44px tap target for the tab chip */
+  .tab-chip {
+    min-height: 2.75rem;
+    padding: var(--space-2) var(--space-3);
   }
 }
 </style>
