@@ -1,0 +1,32 @@
+{
+  "name": "primetimetank21.github.io",
+  "type": "module",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "check": "astro check",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "test:e2e": "playwright test tests/e2e/smoke.spec.ts",
+    "test:visual": "playwright test tests/e2e/visual.spec.ts",
+    "test:visual:update": "playwright test tests/e2e/visual.spec.ts --update-snapshots",
+    "test": "npm run test:unit && npm run test:e2e"
+  },
+  "dependencies": {
+    "astro": "^7.1.3"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.9",
+    "@playwright/test": "1.61.1",
+    "@types/node": "26.1.1",
+    "@vitest/coverage-v8": "4.1.10",
+    "typescript": "6.0.3",
+    "vitest": "4.1.10"
+  }
+}
