@@ -47,6 +47,17 @@ body {
   animation-timing-function: var(--easing-default);
 }
 
+/* Terminal window morphs as a named element during theme toggle */
+::view-transition-group(terminal) {
+  animation-duration: var(--duration-normal);
+  animation-timing-function: var(--easing-default);
+}
+::view-transition-old(terminal),
+::view-transition-new(terminal) {
+  animation-duration: var(--duration-normal);
+  animation-timing-function: var(--easing-default);
+}
+
 /* Instant transitions for reduced-motion users */
 @media (prefers-reduced-motion: reduce) {
   html {
@@ -54,7 +65,9 @@ body {
   }
 
   ::view-transition-old(root),
-  ::view-transition-new(root) {
+  ::view-transition-new(root),
+  ::view-transition-old(terminal),
+  ::view-transition-new(terminal) {
     animation-duration: 0.001ms !important;
     animation-delay: 0ms !important;
   }
