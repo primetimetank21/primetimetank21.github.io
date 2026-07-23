@@ -55,7 +55,7 @@ export const PROJECTS: readonly Project[] = [
   },
   {
     name: 'instagram-scanner',
-    description: 'Playwright-based Python tool that scans your Instagram account to generate stats based on your followers and following.',
+    description: 'Playwright-based Python tool that scans your Instagram account to generate stats based on your followers and following numbers.',
     url: 'https://github.com/primetimetank21/instagram-scanner',
     status: 'completed',
   },
