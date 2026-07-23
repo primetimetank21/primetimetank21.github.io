@@ -33,6 +33,11 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
 
+  // Route all toHaveScreenshot() PNGs into the committed __snapshots__ dir.
+  // Default template writes to {testDir}/visual.spec.ts-snapshots/ — this
+  // overrides it so files land in tests/e2e/__snapshots__/ as intended.
+  snapshotPathTemplate: '{testDir}/__snapshots__/{arg}{-projectName}{-snapshotSuffix}{ext}',
+
   expect: {
     toHaveScreenshot: {
       animations: 'disabled',
