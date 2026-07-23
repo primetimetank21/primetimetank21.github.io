@@ -56,10 +56,22 @@ npm run test
 
 ## Visual Regression Baselines
 
-> ⚠️ **Baselines MUST be generated on Linux** (inside the official Playwright Docker image).  
-> Windows and macOS produce different font-rendering output than CI — committing Windows-generated baselines will cause flake on every PR.
+> ⚠️ **Baselines MUST be generated on Linux.**  
+> Windows and macOS produce different font-rendering output than CI — committing non-Linux baselines will cause flake on every PR.
 
-### Generate / update baselines (run on any OS, Docker required)
+### Generate / update baselines — Actions workflow (recommended)
+
+No Docker required. Uses the same pinned Linux image as CI.
+
+1. Go to **Actions** → **Update Visual Baselines** in the GitHub UI.
+2. Click **Run workflow**, choose the target branch (default: `main`), click the green **Run workflow** button.
+3. The job runs on the Linux runner, commits updated `tests/e2e/__snapshots__/` directly to that branch, and exits. No further steps needed.
+
+> **Branch protection note:** The bot pushes directly (not via PR). This works as long as "Require a pull request before merging" is not enabled on `main`. If you add that protection later, run the workflow on a feature branch and open a PR to land the baselines.
+
+### Generate / update baselines — local Docker (optional alternative)
+
+If you prefer to run locally and have Docker available:
 
 ```sh
 # Pull the pinned image (same version as CI)
@@ -96,6 +108,7 @@ git commit -m "test(visual): update Linux baselines"
 |----------|---------|------|
 | `Build & Check` | Pull request → `main` | Build · Type-check · Link check · Unit tests · E2E smoke · Visual (advisory) |
 | `Deploy to GitHub Pages` | Push to `main` | Build · Deploy |
+| `Update Visual Baselines` | Manual (`workflow_dispatch`) | Regenerate + commit Linux snapshots |
 
 **Deploy gate:** merging to `main` = publish. PRs never deploy.
 
@@ -113,8 +126,9 @@ Required check to enable on `main` in repo Settings → Branches → Branch prot
 /
 ├── .github/
 │   └── workflows/
-│       ├── build-check.yml    ← PR checks (build + tests)
-│       └── deploy.yml         ← Pages deploy on push to main
+│       ├── build-check.yml            ← PR checks (build + tests)
+│       ├── deploy.yml                 ← Pages deploy on push to main
+│       └── update-visual-baselines.yml ← Manual: regenerate Linux snapshots
 ├── public/
 ├── src/
 │   ├── __tests__/unit/        ← Vitest unit tests
