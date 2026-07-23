@@ -121,6 +121,8 @@
 
 <script>
 import { executeCommand, getCompletion, TerminalHistory } from '../../lib/terminal.ts';
+import { bootUpTerminal, revealWelcomeLines, revealOutputEntry } from '../../utils/animations.ts';
+import { typeText, shouldAnimate } from '../../utils/motion.ts';
 
 // ─── DOM references ──────────────────────────────────────────────────────────
 const outputEl    = document.getElementById('terminal-output') as HTMLDivElement;
@@ -205,6 +207,7 @@ function renderLineContent(el: HTMLElement, text: string): void {
       a.style.textDecoration = 'underline';
       a.style.textUnderlineOffset = '2px';
       a.style.cursor = 'pointer';
+      a.style.transition = 'color var(--duration-fast) var(--easing-default)';
       el.appendChild(a);
     } else {
       // Status badge [active] / [completed] — subtle inline label
@@ -268,6 +271,9 @@ function appendEntry(cmdText: string, lines: string[]): void {
   }
 
   outputEl.appendChild(entry);
+
+  // Staggered output reveal (M3)
+  revealOutputEntry(entry);
 
   // Autoscroll to bottom
   outputEl.scrollTop = outputEl.scrollHeight;
@@ -380,6 +386,50 @@ document.querySelector('.terminal-body')?.addEventListener('click', (e: Event) =
 updateMirror();
 // Focus after a frame to ensure layout is settled
 requestAnimationFrame(() => inputEl.focus());
+
+// ─── M3: Boot-up animation + welcome typewriter ───────────────────────────────
+
+(async () => {
+  const terminalWindowEl = document.querySelector('.terminal-window');
+  const welcomeEntryEl   = document.querySelector('.terminal-entry--system');
+  if (!terminalWindowEl || !welcomeEntryEl) return;
+
+  const welcomeLines = Array.from(welcomeEntryEl.querySelectorAll('.entry-line'));
+
+  if (shouldAnimate() && welcomeLines.length > 0) {
+    // Hide welcome lines immediately — GSAP will reveal them after boot-up
+    const line1 = welcomeLines[0] as HTMLElement;
+    const restLines = welcomeLines.slice(1);
+
+    // Stash then clear first line so we can type it back
+    line1.textContent = '\u00a0'; // NBSP preserves row height during boot-up
+    restLines.forEach(l => ((l as HTMLElement).style.opacity = '0'));
+
+    // Boot-up: terminal chrome fades/scales in, dots pop
+    await bootUpTerminal(terminalWindowEl);
+
+    // Brief pause — mimics system initialisation
+    await new Promise<void>(r => setTimeout(r, 80));
+
+    // Typewriter on intro line
+    line1.textContent = '';
+    await typeText(line1, "Welcome to primetimetank21's terminal.", {
+      charDelay: Number(
+        getComputedStyle(document.documentElement)
+          .getPropertyValue('--duration-type')
+          .trim()
+          .replace('ms', ''),
+      ) || 28,
+    });
+    // Re-apply accent span around the username after typing completes
+    line1.innerHTML =
+      `Welcome to <span class="hl-accent">primetimetank21</span>'s terminal.`;
+
+    // Stagger-reveal remaining welcome lines
+    restLines.forEach(l => ((l as HTMLElement).style.opacity = ''));
+    await revealWelcomeLines(restLines);
+  }
+})();
 </script>
 
 <style>
@@ -395,6 +445,8 @@ requestAnimationFrame(() => inputEl.focus());
   border-radius: var(--radius-xl);
   overflow: hidden;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  /* View Transitions: terminal morphs as a named element during theme switch */
+  view-transition-name: terminal;
 }
 
 /* ─── Title bar ──────────────────────────────────────────────────────────── */
@@ -421,6 +473,11 @@ requestAnimationFrame(() => inputEl.focus());
   height: 0.75rem;
   border-radius: var(--radius-full);
   flex-shrink: 0;
+  /* Hover micro-interaction */
+  transition: transform var(--duration-fast) var(--easing-spring);
+}
+.dot:hover {
+  transform: scale(1.25);
 }
 .dot-close { background: var(--color-dot-close); }
 .dot-min   { background: var(--color-dot-min);   }
@@ -517,6 +574,13 @@ requestAnimationFrame(() => inputEl.focus());
   border-radius: var(--radius-sm);
   padding: 0 var(--space-1);
   color: var(--color-info);
+  transition:
+    background var(--duration-fast) var(--easing-default),
+    border-color var(--duration-fast) var(--easing-default);
+}
+.kbd:hover {
+  background: var(--color-bg-elevated);
+  border-color: var(--color-accent);
 }
 
 /* ─── Input line ─────────────────────────────────────────────────────────── */
@@ -603,17 +667,33 @@ requestAnimationFrame(() => inputEl.focus());
   white-space: nowrap;
   flex-shrink: 0;
   /* Visible only when ghost text is active (toggled via hidden attr) */
+  transition:
+    background var(--duration-fast) var(--easing-default),
+    border-color var(--duration-fast) var(--easing-default),
+    transform var(--duration-fast) var(--easing-spring);
 }
 
 .tab-chip:hover {
   background: var(--color-bg-elevated);
   border-color: var(--color-accent);
+  transform: scale(1.06);
+}
+
+.tab-chip:active {
+  transform: scale(0.96);
 }
 
 /* ─── Reduced-motion: no input blink from caret ──────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .real-input {
     caret-color: var(--color-cursor);
+  }
+  /* Disable all micro-interaction transitions */
+  .dot,
+  .tab-chip,
+  .kbd {
+    transition: none !important;
+    transform: none !important;
   }
 }
 
