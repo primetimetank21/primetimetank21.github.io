@@ -148,7 +148,7 @@ test.describe('terminal interaction', () => {
     await input.pressSequentially('projects');
     await input.press('Enter');
     const links = page.locator('#terminal-output a[href^="https://github.com/primetimetank21/"]');
-    await expect(links).toHaveCount(3);
+    await expect(links).toHaveCount(6);
   });
 
   test('projects command shows status tags', async ({ page }) => {

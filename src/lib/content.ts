@@ -41,6 +41,24 @@ export const PROJECTS: readonly Project[] = [
     url: 'https://github.com/primetimetank21/apple-music-playlist-converter',
     status: 'completed',
   },
+  {
+    name: 'PIT-UN-hackathon2023',
+    description: 'FinLITT \u2014 a personalized financial literacy web app built with Python and Pynecone.',
+    url: 'https://github.com/primetimetank21/PIT-UN-hackathon2023',
+    status: 'completed',
+  },
+  {
+    name: 'hackUMBC2022',
+    description: 'TrustDeFi \u2014 Python tool to assess Ethereum wallet trustworthiness via on-chain transaction history.',
+    url: 'https://github.com/primetimetank21/hackUMBC2022',
+    status: 'completed',
+  },
+  {
+    name: 'instagram-scanner',
+    description: 'Playwright-based Python script that scans Instagram and reports accounts not following you back.',
+    url: 'https://github.com/primetimetank21/instagram-scanner',
+    status: 'completed',
+  },
 ];
 
 /** Render projects as terminal output lines. */
