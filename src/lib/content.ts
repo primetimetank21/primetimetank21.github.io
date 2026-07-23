@@ -55,7 +55,7 @@ export const PROJECTS: readonly Project[] = [
   },
   {
     name: 'instagram-scanner',
-    description: 'Playwright-based Python script that scans Instagram and reports accounts not following you back.',
+    description: 'Playwright-based Python tool that scans your Instagram for followers, following, and non-mutual accounts (both directions).',
     url: 'https://github.com/primetimetank21/instagram-scanner',
     status: 'completed',
   },
