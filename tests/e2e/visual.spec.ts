@@ -127,4 +127,34 @@ test.describe('404 page', () => {
       animations: 'disabled',
     });
   });
+
+  test('404 light theme — desktop', async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('theme', 'light'));
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/this-page-does-not-exist');
+    await page.waitForLoadState('networkidle');
+    await expect(page).toHaveScreenshot('404-light-desktop.png', {
+      animations: 'disabled',
+    });
+  });
+
+  test('404 dark theme — mobile (390×844)', async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('theme', 'dark'));
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/this-page-does-not-exist');
+    await page.waitForLoadState('networkidle');
+    await expect(page).toHaveScreenshot('404-dark-mobile.png', {
+      animations: 'disabled',
+    });
+  });
+
+  test('404 light theme — mobile (390×844)', async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('theme', 'light'));
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/this-page-does-not-exist');
+    await page.waitForLoadState('networkidle');
+    await expect(page).toHaveScreenshot('404-light-mobile.png', {
+      animations: 'disabled',
+    });
+  });
 });

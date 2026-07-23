@@ -118,7 +118,11 @@ jobs:
             echo "PR opened and auto-merge enabled — lands once CI passes."
           else
             # For any PR branch: push directly. Branch protection only guards main.
-            git commit -m "test(visual): regenerate Linux baselines for ${TARGET_BRANCH} [skip ci]"
+            # NOTE: Do NOT add [skip ci] here — these commits land in the PR branch
+            # and get squashed into the merge commit. [skip ci] in any squash-commit
+            # body causes GitHub to skip ALL workflows on the main push, including
+            # deploy.yml. Root-cause of M4 missed auto-deploy (2026-07-23).
+            git commit -m "test(visual): regenerate Linux baselines for ${TARGET_BRANCH}"
             git push origin HEAD:"$TARGET_BRANCH"
             echo "Baselines committed directly to ${TARGET_BRANCH}."
           fi

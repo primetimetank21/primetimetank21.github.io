@@ -1,9 +1,9 @@
 ---
 /**
- * 404.astro — on-brand "command not found" error page.
+ * 404.astro — on-brand route-error page.
  *
  * GitHub Pages serves this file for any unmatched route.
- * Rendered as a terminal window matching the Tokyo Night aesthetic.
+ * Static terminal-chrome page (Tokyo Night). No interactive island.
  */
 import Layout from '../layouts/Layout.astro';
 
@@ -11,7 +11,7 @@ const path = Astro.url.pathname;
 ---
 
 <Layout
-  title="404 — command not found | primetimetank21"
+  title="404 — route not found | primetimetank21"
   description="The page you are looking for does not exist."
   canonicalURL="https://primetimetank21.github.io/404"
 >
@@ -36,7 +36,7 @@ const path = Astro.url.pathname;
         <div class="terminal-entry">
           <div class="entry-command">
             <span class="entry-prompt" aria-hidden="true">❯</span>
-            <span class="entry-cmd">cd <span class="path-text">{path}</span></span>
+            <span class="entry-cmd">GET <span class="path-text">{path}</span></span>
           </div>
         </div>
 
@@ -44,24 +44,9 @@ const path = Astro.url.pathname;
         <div class="error-output" role="alert">
           <p class="error-line">
             <span class="error-badge" aria-label="Error">✗</span>
-            <span>command not found: <code class="path-text">{path}</code></span>
+            <span>route not found: <code class="path-text">{path}</code></span>
           </p>
-          <p class="error-sub">No such file or directory</p>
-        </div>
-
-        <!-- Suggestions -->
-        <div class="suggestions">
-          <p class="suggestions-heading">Try one of these instead:</p>
-          <ul class="suggestions-list" aria-label="Available routes">
-            <li>
-              <span class="cmd-text">cd /</span>
-              <span class="cmd-desc">— return to the main terminal</span>
-            </li>
-            <li>
-              <span class="cmd-text">help</span>
-              <span class="cmd-desc">— list available commands (in the terminal)</span>
-            </li>
-          </ul>
+          <p class="error-sub">No such page.</p>
         </div>
 
         <!-- Home link -->
@@ -72,6 +57,10 @@ const path = Astro.url.pathname;
           </a>
           <span class="cursor" aria-hidden="true"></span>
         </div>
+
+        <!-- Hint -->
+        <p class="hint">Back in the terminal, type <code class="hint-cmd">help</code> to see what's available.</p>
+
       </div><!-- /terminal-body -->
 
     </div><!-- /terminal-window -->
@@ -209,42 +198,6 @@ const path = Astro.url.pathname;
     padding-left: calc(var(--space-2) + 1.1em);
   }
 
-  /* ─── Suggestions ────────────────────────────────────────────────────────── */
-  .suggestions {
-    padding-left: var(--space-5);
-  }
-
-  .suggestions-heading {
-    color: var(--color-fg-muted);
-    margin-bottom: var(--space-3);
-    font-size: var(--font-size-sm);
-  }
-
-  .suggestions-list {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-  }
-
-  .suggestions-list li {
-    display: flex;
-    gap: var(--space-3);
-    align-items: baseline;
-    flex-wrap: wrap;
-  }
-
-  .cmd-text {
-    color: var(--color-info);
-    min-width: 10ch;
-    flex-shrink: 0;
-  }
-
-  .cmd-desc {
-    color: var(--color-fg-muted);
-    font-size: var(--font-size-sm);
-  }
-
   /* ─── Home prompt ────────────────────────────────────────────────────────── */
   .home-prompt {
     display: flex;
@@ -291,6 +244,18 @@ const path = Astro.url.pathname;
       animation: none !important;
       opacity: 1 !important;
     }
+  }
+
+  /* ─── Hint ───────────────────────────────────────────────────────────────── */
+  .hint {
+    color: var(--color-fg-muted);
+    font-size: var(--font-size-sm);
+    margin-top: var(--space-3);
+  }
+
+  .hint-cmd {
+    color: var(--color-info);
+    font-family: var(--font-mono);
   }
 
   /* ─── Responsive ─────────────────────────────────────────────────────────── */

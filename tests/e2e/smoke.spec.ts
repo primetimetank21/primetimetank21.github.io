@@ -96,8 +96,8 @@ test.describe('404 page', () => {
     await expect(notFound).toBeVisible();
   });
 
-  test('shows command-not-found error message', async ({ page }) => {
-    await expect(page.locator('body')).toContainText('command not found');
+  test('shows route-not-found error message', async ({ page }) => {
+    await expect(page.locator('body')).toContainText('route not found');
   });
 
   test('has a link back to home', async ({ page }) => {

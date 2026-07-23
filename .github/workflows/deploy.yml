@@ -12,10 +12,13 @@ permissions:
   pages: write
   id-token: write
 
-# Only one deploy runs at a time; in-progress cancels on new push
+# Only one deploy runs at a time; queued deploys wait rather than cancel.
+# cancel-in-progress was previously true — that, combined with [skip ci] in
+# baseline-commit messages leaking into squash-merge bodies, caused the M4
+# deploy to be silently skipped. Keep false so deploys always complete.
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
