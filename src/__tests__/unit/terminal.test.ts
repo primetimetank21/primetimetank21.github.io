@@ -147,6 +147,12 @@ describe('executeCommand', () => {
     expect(text).toContain('github.com');
   });
 
+  it('projects command returns exactly 3 projects', () => {
+    const r = executeCommand('projects');
+    const urls = r.lines.filter(l => l.trim().startsWith('https://github.com/primetimetank21/'));
+    expect(urls).toHaveLength(3);
+  });
+
   it('skills command routes to output type with tech stack content', () => {
     const r = executeCommand('skills');
     expect(r.type).toBe('output');

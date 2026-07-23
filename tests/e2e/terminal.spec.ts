@@ -133,6 +133,24 @@ test.describe('terminal interaction', () => {
     await expect(output).toContainText('linkedin.com');
   });
 
+  test('links command renders URLs as clickable anchors', async ({ page }) => {
+    const input = page.locator('#terminal-input');
+    await input.pressSequentially('links');
+    await input.press('Enter');
+    const link = page.locator('#terminal-output a[href="https://github.com/primetimetank21"]');
+    await expect(link).toBeVisible();
+    await expect(link).toHaveAttribute('target', '_blank');
+    await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+  });
+
+  test('projects command renders URLs as clickable anchors', async ({ page }) => {
+    const input = page.locator('#terminal-input');
+    await input.pressSequentially('projects');
+    await input.press('Enter');
+    const links = page.locator('#terminal-output a[href^="https://github.com/primetimetank21/"]');
+    await expect(links).toHaveCount(3);
+  });
+
   test('contact command shows real links', async ({ page }) => {
     const input = page.locator('#terminal-input');
     const output = page.locator('#terminal-output');

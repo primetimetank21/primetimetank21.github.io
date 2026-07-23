@@ -181,6 +181,36 @@ function esc(s: string): string {
     .replace(/"/g, '&quot;');
 }
 
+// ─── Render a single output line (auto-links URLs) ────────────────────────────
+
+function renderLineContent(el: HTMLElement, text: string): void {
+  // Split on URLs so they can be wrapped in <a> elements.
+  // Using a capturing group preserves the matched URL in the split result.
+  const parts = text.split(/(https?:\/\/[^\s]+)/g);
+  if (parts.length === 1) {
+    // No URLs — plain text, safe assignment
+    el.textContent = text;
+    return;
+  }
+  for (const part of parts) {
+    if (/^https?:\/\//.test(part)) {
+      const a = document.createElement('a');
+      a.href = part;
+      a.textContent = part;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      // Inline styles: scoped CSS doesn't reach dynamic elements
+      a.style.color = 'var(--color-info)';
+      a.style.textDecoration = 'underline';
+      a.style.textUnderlineOffset = '2px';
+      a.style.cursor = 'pointer';
+      el.appendChild(a);
+    } else {
+      el.appendChild(document.createTextNode(part));
+    }
+  }
+}
+
 // ─── Append entry to scrollback ───────────────────────────────────────────────
 
 function appendEntry(cmdText: string, lines: string[]): void {
@@ -199,13 +229,25 @@ function appendEntry(cmdText: string, lines: string[]): void {
   if (lines.length > 0) {
     const outDiv = document.createElement('div');
     outDiv.className = 'entry-output';
-    // pre-wrap preserves alignment spaces in commands like `help`
+    // Inline styles replicate scoped CSS rules that won't reach dynamic elements
+    outDiv.style.marginTop = 'var(--space-1)';
+    outDiv.style.paddingLeft = 'var(--space-5)';
+    outDiv.style.color = 'var(--color-fg-muted)';
     outDiv.style.whiteSpace = 'pre-wrap';
+
     for (const line of lines) {
-      // div (not span) so each line is block-level regardless of Astro CSS scoping
+      // div (not span) → block by default regardless of Astro CSS scoping
       const lineDiv = document.createElement('div');
       lineDiv.className = 'entry-line';
-      lineDiv.textContent = line;
+      lineDiv.style.wordBreak = 'break-word';
+      lineDiv.style.lineHeight = 'var(--line-height-normal)';
+
+      if (line === '') {
+        // Empty lines collapse without content — NBSP preserves the line height
+        lineDiv.textContent = '\u00a0';
+      } else {
+        renderLineContent(lineDiv, line);
+      }
       outDiv.appendChild(lineDiv);
     }
     entry.appendChild(outDiv);

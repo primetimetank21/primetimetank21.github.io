@@ -12,19 +12,11 @@ export interface Project {
 // ─── About ───────────────────────────────────────────────────────────────────
 
 export const ABOUT_LINES: readonly string[] = [
-  'Earl Tankard, Jr.  \u00b7  SWE @ Microsoft',
+  "I'm a Software Engineer in Microsoft's AI Development Acceleration Program (MAIDAP), where I take software from prototype to production with an AI-powered approach to development.",
   '',
-  "MAIDAP \u2014 Microsoft's AI Development Acceleration Program.",
-  'Taking software from prototype to production,',
-  'powered by AI + strong engineering fundamentals.',
+  'AI is a very powerful and useful tool, but a dangerous crutch. As such, I use modern AI tools to amplify my strong engineering fundamentals and skills.',
   '',
-  'AI is a powerful tool \u2014 but a dangerous crutch.',
-  "I don't replace fundamentals; I amplify them.",
-  '',
-  '  AI Superpowers \u00d7 Tried-and-True Deterministic Mechanisms',
-  '  (Git-Hooks, CI/CD, ...) \u2192 products that solve real problems.',
-  '',
-  'Ph.D.  \u00b7  github.com/primetimetank21',
+  "My aim is to find a good 'mix' of 'AI Superpowers' + 'Tried-and-True Deterministic Mechanisms' (i.e., Git-Hooks, CI/CD, etc.) to build products that solve real problems.",
 ];
 
 // ─── Projects ────────────────────────────────────────────────────────────────
@@ -45,29 +37,17 @@ export const PROJECTS: readonly Project[] = [
     description: 'Full-stack todo app \u2014 FastAPI, React, MongoDB.',
     url: 'https://github.com/primetimetank21/farm-stack-todo-app',
   },
-  {
-    name: 'flask-sqlalchemy-react-movie-app',
-    description: 'Full-stack movie app \u2014 Flask, SQLAlchemy, React.',
-    url: 'https://github.com/primetimetank21/flask-sqlalchemy-react-movie-app',
-  },
-  {
-    name: 'apple-music-playlist-converter',
-    description: 'Python utility to convert Apple Music playlists.',
-    url: 'https://github.com/primetimetank21/apple-music-playlist-converter',
-  },
 ];
 
 /** Render projects as terminal output lines. */
 export function formatProjects(): string[] {
-  const lines: string[] = ['Projects:'];
-  for (const p of PROJECTS) {
-    lines.push('');
-    lines.push(`  ${p.name}`);
-    lines.push(`  ${p.description}`);
+  const lines: string[] = [];
+  for (let i = 0; i < PROJECTS.length; i++) {
+    const p = PROJECTS[i];
+    lines.push(`${p.name}  \u2014  ${p.description}`);
     lines.push(`  ${p.url}`);
+    if (i < PROJECTS.length - 1) lines.push('');
   }
-  lines.push('');
-  lines.push('  Run `links` to find more on GitHub.');
   return lines;
 }
 
