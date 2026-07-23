@@ -7,6 +7,7 @@ export interface Project {
   name: string;
   description: string;
   url: string;
+  status: 'active' | 'completed';
 }
 
 // ─── About ───────────────────────────────────────────────────────────────────
@@ -26,16 +27,19 @@ export const PROJECTS: readonly Project[] = [
     name: 'primetimetank21.github.io',
     description: 'Terminal-style portfolio \u2014 Astro, TypeScript, GitHub Pages.',
     url: 'https://github.com/primetimetank21/primetimetank21.github.io',
+    status: 'active',
   },
   {
     name: 'dev-setup',
     description: 'Cross-platform dev environment setup (macOS, Linux, Windows).',
     url: 'https://github.com/primetimetank21/dev-setup',
+    status: 'active',
   },
   {
-    name: 'farm-stack-todo-app',
-    description: 'Full-stack todo app \u2014 FastAPI, React, MongoDB.',
-    url: 'https://github.com/primetimetank21/farm-stack-todo-app',
+    name: 'apple-music-playlist-converter',
+    description: 'Python CLI to migrate Apple Music playlists to Spotify via the Spotify API.',
+    url: 'https://github.com/primetimetank21/apple-music-playlist-converter',
+    status: 'completed',
   },
 ];
 
@@ -44,7 +48,7 @@ export function formatProjects(): string[] {
   const lines: string[] = [];
   for (let i = 0; i < PROJECTS.length; i++) {
     const p = PROJECTS[i];
-    lines.push(`${p.name}  \u2014  ${p.description}`);
+    lines.push(`${p.name}  \u2014  ${p.description}  [${p.status}]`);
     lines.push(`  ${p.url}`);
     if (i < PROJECTS.length - 1) lines.push('');
   }

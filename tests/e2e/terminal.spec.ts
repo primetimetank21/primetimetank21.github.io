@@ -151,6 +151,15 @@ test.describe('terminal interaction', () => {
     await expect(links).toHaveCount(3);
   });
 
+  test('projects command shows status tags', async ({ page }) => {
+    const input = page.locator('#terminal-input');
+    const output = page.locator('#terminal-output');
+    await input.pressSequentially('projects');
+    await input.press('Enter');
+    await expect(output).toContainText('[active]');
+    await expect(output).toContainText('[completed]');
+  });
+
   test('contact command shows real links', async ({ page }) => {
     const input = page.locator('#terminal-input');
     const output = page.locator('#terminal-output');

@@ -153,6 +153,18 @@ describe('executeCommand', () => {
     expect(urls).toHaveLength(3);
   });
 
+  it('projects command includes apple-music-playlist-converter', () => {
+    const text = executeCommand('projects').lines.join('\n');
+    expect(text).toContain('apple-music-playlist-converter');
+    expect(text).not.toContain('farm-stack-todo');
+  });
+
+  it('projects output includes status tags', () => {
+    const text = executeCommand('projects').lines.join('\n');
+    expect(text).toContain('[active]');
+    expect(text).toContain('[completed]');
+  });
+
   it('skills command routes to output type with tech stack content', () => {
     const r = executeCommand('skills');
     expect(r.type).toBe('output');
