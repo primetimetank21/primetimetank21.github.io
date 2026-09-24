@@ -1,7 +1,14 @@
 # primetimetank21.github.io
 
-> Terminal-style personal portfolio — built with Astro, animated with GSAP + CSS View Transitions, Tokyo Night themed.
+> Browsable software-engineering portfolio with an optional interactive terminal — built with Astro, animated with GSAP + CSS View Transitions, Tokyo Night themed.
 > Live at **https://primetimetank21.github.io**
+
+## Portfolio experience
+
+- Professional identity, project case studies, skills, and contact links are rendered at build time and work without JavaScript.
+- Ordinary navigation and the optional terminal share the copy in `src/lib/content.ts`; project evidence links and limitations are kept alongside the case studies.
+- The terminal retains commands, history, completion, and theme switching, with normal keyboard navigation, focusable scrollback, and native mobile text editing.
+- A résumé download is intentionally not shown until an actual public résumé asset is supplied.
 
 ## Stack
 
@@ -164,13 +171,14 @@ git commit -m "test(visual): update Linux baselines"
 ├── src/
 │   ├── __tests__/unit/        ← Vitest unit tests
 │   ├── components/
+│   │   ├── ProjectCard.astro           ← Static project/case-study presentation
 │   │   ├── Terminal/
 │   │   │   └── TerminalShell.astro    ← Interactive terminal island
 │   │   └── ThemeToggle.astro
 │   ├── layouts/
 │   │   └── Layout.astro               ← SEO/OG meta, theme injection, slots
 │   ├── lib/
-│   │   ├── content.ts                 ← Portfolio copy (single edit point)
+│   │   ├── content.ts                 ← Shared homepage + terminal copy
 │   │   └── terminal.ts                ← Pure terminal logic (Vitest-importable)
 │   ├── pages/
 │   │   ├── index.astro
