@@ -7,20 +7,24 @@ name: Update Visual Baselines
 #   2. Leave "branch" as `main` to update main after a merged change, OR
 #      enter a PR branch (e.g. `squad/issue-26-m4-polish`) to bless
 #      intentional UI changes on that PR before review.
-#   3. Click "Run workflow".
+#   3. Leave "commit_baselines" checked for automated commits, OR uncheck it
+#      to generate/upload artifacts only for review and a manual commit.
+#   4. Click "Run workflow".
 #
 # WHAT HAPPENS:
-#   - For a PR branch (non-main): baselines are committed DIRECTLY to that
-#     branch. The now-blocking visual check re-runs automatically and goes
-#     green once the commit lands.
-#   - For main: baselines are committed to a `baselines/auto-<run-id>` branch
-#     and a PR is opened with auto-merge enabled (branch protection prevents a
-#     direct push to main). Earl can also merge it manually with:
-#       gh pr merge baselines/auto-<run-id> --admin --squash
+#   - Always: generate and upload snapshots in the pinned CI container.
+#   - With commit_baselines=false: skip the entire commit job; no commits,
+#     pushes, PR creation, or merge requests are made.
+#   - With commit_baselines=true (default): commit directly to a non-main
+#     branch, or create a `baselines/auto-<run-id>` PR with auto-merge for main.
+#     Branch protection still prevents a direct push to main.
+#   - GITHUB_TOKEN-originated events do not guarantee automatic checks or
+#     deployment. PR runs may need maintainer approval; token-originated
+#     pushes do not trigger push workflows. Verify all four required checks
+#     on the latest PR commit and the deployment after merge (see README).
 #
-# ⚠️ The container (mcr.microsoft.com/playwright:v1.61.1-noble) is the same
-#    pinned image as CI — guarantees identical font rendering so comparison
-#    won't flake due to rendering differences.
+# ⚠️ Use the same pinned container as CI for consistent font rendering:
+#    mcr.microsoft.com/playwright:v1.61.1-noble. A Linux host alone is not enough.
 
 on:
   workflow_dispatch:
@@ -29,6 +33,11 @@ on:
         description: 'Target branch for baseline regeneration (default: main). Enter a PR branch name to bless UI changes on that PR.'
         required: false
         default: 'main'
+      commit_baselines:
+        description: 'Commit snapshots and update branches/PRs. Uncheck to upload artifacts only for review and a manual commit.'
+        type: boolean
+        required: false
+        default: true
 
 permissions:
   contents: write
@@ -39,6 +48,8 @@ jobs:
   generate-baselines:
     name: Regenerate Visual Baselines (Linux)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     container:
       image: mcr.microsoft.com/playwright:v1.61.1-noble
 
@@ -74,6 +85,8 @@ jobs:
   commit-baselines:
     name: Commit baselines to branch
     needs: generate-baselines
+    # inputs preserves booleans; github.event.inputs would contain strings.
+    if: ${{ inputs.commit_baselines }}
     runs-on: ubuntu-latest
 
     steps:
@@ -107,23 +120,22 @@ jobs:
             # Create a baselines/* branch, open PR, enable auto-merge.
             BASELINE_BRANCH="baselines/auto-${GITHUB_RUN_ID}"
             git checkout -b "$BASELINE_BRANCH"
-            git commit -m "test(visual): regenerate Linux baselines [skip ci]"
+            git commit -m "test(visual): regenerate Linux baselines"
             git push origin "$BASELINE_BRANCH"
             gh pr create \
               --title "test(visual): regenerate Linux baselines" \
-              --body "Automated baseline update from workflow run \`${GITHUB_RUN_ID}\`. Auto-merges once CI passes. To merge manually: \`gh pr merge ${BASELINE_BRANCH} --admin --squash\`" \
+              --body "Automated baseline update from workflow run \`${GITHUB_RUN_ID}\`. Auto-merge is requested, but GITHUB_TOKEN-originated events do not guarantee automatic checks or deployment. A maintainer must approve or trigger any missing checks and verify all four required checks on the latest PR commit before merge. See README for recovery and deployment verification." \
               --base main \
               --head "$BASELINE_BRANCH"
             gh pr merge "$BASELINE_BRANCH" --auto --squash
-            echo "PR opened and auto-merge enabled — lands once CI passes."
+            echo "PR opened and auto-merge requested; verify all four required checks on the latest PR commit."
           else
-            # For any PR branch: push directly. Branch protection only guards main.
-            # NOTE: Do NOT add [skip ci] here — these commits land in the PR branch
-            # and get squashed into the merge commit. [skip ci] in any squash-commit
-            # body causes GitHub to skip ALL workflows on the main push, including
-            # deploy.yml. Root-cause of M4 missed auto-deploy (2026-07-23).
+            # For a non-main target: push directly, subject to its branch rules.
+            # Never add CI-skip markers to either commit message: they can leave
+            # required checks pending and suppress deployment after squash merge.
             git commit -m "test(visual): regenerate Linux baselines for ${TARGET_BRANCH}"
             git push origin HEAD:"$TARGET_BRANCH"
             echo "Baselines committed directly to ${TARGET_BRANCH}."
           fi
+          echo "GITHUB_TOKEN events may need maintainer action for checks; verify deployment after merge. See README."
 
