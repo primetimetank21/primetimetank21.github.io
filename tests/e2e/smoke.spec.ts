@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { ABOUT_PARAGRAPHS, PROJECTS, SKILL_GROUPS, CONTACT, PROFILE } from '../../src/lib/content';
 
 /**
  * Smoke E2E tests — always run (no visual regression here).
@@ -7,13 +8,16 @@ import { test, expect } from '@playwright/test';
 test.describe('homepage', () => {
   test('loads and has correct title', async ({ page }) => {
     await page.goto('/');
-    await expect(page).toHaveTitle(/primetimetank21/i);
+    await expect(page).toHaveTitle(/Earl Tankard Jr.*Software Engineer/i);
   });
 
   test('has a main heading', async ({ page }) => {
     await page.goto('/');
     const heading = page.locator('h1');
-    await expect(heading).toBeVisible();
+    await expect(heading).toHaveText(PROFILE.name);
+    await expect(heading).toBeInViewport();
+    await expect(page.locator('.role')).toHaveText(PROFILE.role);
+    await expect(page.locator('.summary')).toBeInViewport();
   });
 });
 
@@ -96,13 +100,18 @@ test.describe('404 page', () => {
     await expect(notFound).toBeVisible();
   });
 
-  test('shows route-not-found error message', async ({ page }) => {
-    await expect(page.locator('body')).toContainText('route not found');
+  test('shows truthful path-independent error message', async ({ page }) => {
+    await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName('Page not found');
+    await expect(page.locator('main')).not.toContainText('/404');
+    await expect(page.locator('main')).not.toContainText('GET ');
+    expect(new URL(page.url()).pathname).toBe('/this-does-not-exist');
   });
 
   test('has a link back to home', async ({ page }) => {
     const homeLink = page.locator('a[href="/"]');
     await expect(homeLink).toBeVisible();
+    await homeLink.click();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(PROFILE.name);
   });
 
   test('404 page has correct title', async ({ page }) => {
@@ -110,3 +119,56 @@ test.describe('404 page', () => {
   });
 });
 
+
+// Substantive HTML must be available without terminal interaction or JavaScript.
+test.describe('static portfolio', () => {
+  test.use({ javaScriptEnabled: false });
+
+  for (const width of [1280, 390]) {
+    test(`content and navigation without JavaScript at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto('/');
+      const main = page.locator('main');
+      await expect(main.getByRole('heading', { level: 1 })).toHaveText(PROFILE.name);
+      for (const section of ['Projects', 'About', 'Contact', 'Terminal']) {
+        await expect(page.getByRole('navigation').getByRole('link', { name: section, exact: true }))
+          .toHaveAttribute('href', `#${section.toLowerCase()}`);
+        await expect(main.locator(`#${section.toLowerCase()}`)).toBeVisible();
+      }
+      for (const paragraph of ABOUT_PARAGRAPHS) await expect(main).toContainText(paragraph);
+      for (const project of PROJECTS) {
+        const card = main.getByRole('article', { name: project.name, exact: true });
+        await expect(card).toContainText(project.description);
+        await expect(card.locator(`a[href="${project.url}"]`)).toBeVisible();
+        if (project.caseStudy) {
+          for (const field of ['problem', 'approach', 'tradeoff', 'evidence'] as const) {
+            await expect(card).toContainText(project.caseStudy[field]);
+          }
+          for (const link of project.caseStudy.links) {
+            await expect(card.getByRole('link', { name: link.label })).toHaveAttribute('href', link.url);
+          }
+        }
+      }
+      await expect(main.locator('.featured-projects article')).toHaveCount(2);
+      await expect(main.locator('#projects article').first()).not.toHaveAttribute('aria-label', 'primetimetank21.github.io');
+      for (const group of SKILL_GROUPS) {
+        for (const skill of group.items) await expect(main.locator('.skills')).toContainText(skill);
+      }
+      for (const link of CONTACT.links) {
+        await expect(main.locator('#contact').getByRole('link', { name: link.label })).toHaveAttribute('href', link.url);
+      }
+      await expect(page.locator('.no-script')).toBeVisible();
+      await expect(page.locator('#terminal-input')).toBeHidden();
+      await page.getByRole('navigation').getByRole('link', { name: 'Contact', exact: true }).click();
+      await expect(main.getByRole('heading', { name: 'Contact', exact: true })).toBeInViewport();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    });
+  }
+
+  test('unknown URL returns the real 404 even without JavaScript', async ({ page }) => {
+    const response = await page.goto('/unknown-portfolio-route/nested');
+    expect(response?.status()).toBe(404);
+    await expect(page.getByRole('heading', { name: 'Page not found' })).toBeVisible();
+    await expect(page.locator('main')).not.toContainText('/404');
+  });
+});

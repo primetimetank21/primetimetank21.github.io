@@ -2,42 +2,122 @@
 import Layout from '../layouts/Layout.astro';
 import ThemeToggle from '../components/ThemeToggle.astro';
 import TerminalShell from '../components/Terminal/TerminalShell.astro';
+import ProjectCard from '../components/ProjectCard.astro';
+import { PROFILE, ABOUT_PARAGRAPHS, PROJECTS, SKILL_GROUPS, CONTACT } from '../lib/content';
 ---
 
 <Layout>
-  <!-- Theme toggle in header -->
+  <div slot="nav-extra" class="nav-links">
+    <a href="#projects">Projects</a>
+    <a href="#about">About</a>
+    <a href="#contact">Contact</a>
+    <a href="#terminal">Terminal</a>
+  </div>
   <ThemeToggle slot="header-actions" />
 
-  <section class="hero" aria-label="Terminal hero">
-    <h1 class="hero-heading sr-only">primetimetank21 — Interactive Portfolio Terminal</h1>
-    <TerminalShell />
-  </section>
+  <div class="portfolio">
+    <section class="hero" aria-labelledby="intro-heading">
+      <p class="eyebrow"><span aria-hidden="true">❯</span> engineer / builder</p>
+      <h1 id="intro-heading">{PROFILE.name}</h1>
+      <p class="role">{PROFILE.role}</p>
+      <p class="summary">{PROFILE.summary}</p>
+      <div class="hero-actions">
+        <a class="primary-link" href="#projects">Explore projects <span aria-hidden="true">↓</span></a>
+        <a href={CONTACT.links[1].url} target="_blank" rel="noopener noreferrer">Connect on LinkedIn <span aria-hidden="true">↗</span></a>
+      </div>
+      <p class="terminal-invite">Prefer a command line? <a href="#terminal">Open the terminal <span aria-hidden="true">❯_</span></a></p>
+    </section>
 
-  <!--
-    M2 content slots — structural scaffolding only.
-    Real content (about, projects, links) goes here in M2.
-  -->
+    <section id="projects" aria-labelledby="projects-heading">
+      <div class="section-heading">
+        <p class="eyebrow">01 / public work</p>
+        <h2 id="projects-heading">Projects</h2>
+        <p>Tools, integrations, and experiments — with source you can explore.</p>
+      </div>
+      <div class="featured-projects">
+        {PROJECTS.filter(project => project.caseStudy).map(project => <ProjectCard project={project} />)}
+      </div>
+      <h3 class="other-heading">More projects</h3>
+      <div class="other-projects">
+        {PROJECTS.filter(project => !project.caseStudy).map(project => <ProjectCard project={project} />)}
+      </div>
+    </section>
+
+    <section id="about" aria-labelledby="about-heading">
+      <div class="section-heading">
+        <p class="eyebrow">02 / how I work</p>
+        <h2 id="about-heading">About</h2>
+      </div>
+      <div class="about-grid">
+        <div class="biography">{ABOUT_PARAGRAPHS.map(paragraph => <p>{paragraph}</p>)}</div>
+        <div class="skills">
+          <h3>Skills &amp; tools</h3>
+          <dl>
+            {SKILL_GROUPS.map(group => <div><dt>{group.label}</dt><dd>{group.items.join(' · ')}</dd></div>)}
+          </dl>
+          <p class="skills-evidence">See tooling and API integration in the <a href="#projects">featured projects</a>.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="contact" aria-labelledby="contact-heading">
+      <div class="section-heading">
+        <p class="eyebrow">03 / get in touch</p>
+        <h2 id="contact-heading">Contact</h2>
+        <p>{CONTACT.summary}</p>
+      </div>
+      <ul class="contact-links">
+        {CONTACT.links.map(link => <li><a href={link.url} target="_blank" rel="noopener noreferrer">{link.label} <span aria-hidden="true">↗</span></a></li>)}
+      </ul>
+    </section>
+
+    <section id="terminal" aria-labelledby="terminal-heading">
+      <div class="section-heading">
+        <p class="eyebrow">04 / interactive mode</p>
+        <h2 id="terminal-heading">Terminal</h2>
+        <p>The same portfolio, one command at a time. Try <code>help</code> to explore.</p>
+      </div>
+      <TerminalShell />
+    </section>
+  </div>
 </Layout>
 
 <style>
-  .hero {
-    width: 100%;
-    max-width: var(--terminal-max-width);
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  /* Visually hidden but accessible to screen readers */
-  .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
+  .portfolio { width: 100%; max-width: 1080px; }
+  .nav-links { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); font-size: var(--font-size-sm); }
+  .nav-links a { padding-block: var(--space-2); }
+  section { scroll-margin-top: var(--space-8); }
+  section + section { margin-top: var(--space-20); }
+  .hero { padding: var(--space-8) 0 var(--space-4); max-width: 850px; }
+  .eyebrow { color: var(--color-success); font-size: var(--font-size-sm); margin-bottom: var(--space-3); }
+  h1 { font-size: clamp(2rem, 5vw, 3.5rem); letter-spacing: -0.045em; line-height: var(--line-height-tight); }
+  .role { font-size: var(--font-size-lg); color: var(--color-accent); margin-top: var(--space-5); }
+  .summary { max-width: 67ch; margin-top: var(--space-5); font-size: var(--font-size-lg); color: var(--color-fg-muted); line-height: var(--line-height-normal); }
+  .hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4) var(--space-6); margin-top: var(--space-8); }
+  .primary-link { display: inline-flex; gap: var(--space-4); padding: var(--space-3) var(--space-4); background: var(--color-accent); color: var(--color-bg); border: 1px solid var(--color-accent); border-radius: var(--radius-md); text-decoration: none; font-weight: 700; }
+  .primary-link:hover { color: var(--color-bg); text-decoration: underline; }
+  .terminal-invite { margin-top: var(--space-6); font-size: var(--font-size-sm); color: var(--color-fg-subtle); }
+  .section-heading { margin-bottom: var(--space-6); }
+  h2 { font-size: var(--font-size-2xl); line-height: var(--line-height-tight); }
+  .section-heading > p:last-child:not(.eyebrow) { margin-top: var(--space-3); color: var(--color-fg-muted); max-width: 72ch; }
+  .featured-projects, .other-projects { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5); }
+  .other-heading { color: var(--color-fg-subtle); font-size: var(--font-size-base); margin: var(--space-8) 0 var(--space-4); }
+  .about-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: var(--space-12); }
+  .biography { color: var(--color-fg-muted); line-height: var(--line-height-normal); }
+  .biography p + p { margin-top: var(--space-5); }
+  .skills { border-left: 2px solid var(--color-border); padding-left: var(--space-6); }
+  .skills h3 { font-size: var(--font-size-lg); margin-bottom: var(--space-4); }
+  .skills dl { display: grid; gap: var(--space-4); }
+  .skills dt { color: var(--color-accent-alt); font-size: var(--font-size-sm); margin-bottom: var(--space-1); }
+  .skills dd { color: var(--color-fg-muted); }
+  .skills-evidence { margin-top: var(--space-5); font-size: var(--font-size-sm); color: var(--color-fg-subtle); }
+  #contact { padding-block: var(--space-8); border-block: 1px solid var(--color-border); }
+  .contact-links { display: flex; flex-wrap: wrap; gap: var(--space-6); list-style: none; }
+  @media (max-width: 720px) {
+    .featured-projects, .other-projects, .about-grid { grid-template-columns: 1fr; }
+    .about-grid { gap: var(--space-8); }
+    .hero { padding-top: var(--space-4); }
+    section + section { margin-top: var(--space-12); }
+    .role, .summary { font-size: var(--font-size-md); }
   }
 </style>

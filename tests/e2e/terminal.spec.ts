@@ -1,4 +1,13 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page, type Locator } from '@playwright/test';
+import { textContrast } from './helpers/contrast';
+
+async function tabTo(page: Page, target: Locator, backwards = false) {
+  for (let i = 0; i < 50; i++) {
+    if (await target.evaluate(el => el === document.activeElement)) return;
+    await page.keyboard.press(backwards ? 'Shift+Tab' : 'Tab');
+  }
+  await expect(target).toBeFocused();
+}
 
 /**
  * Terminal E2E tests — always run (not advisory).
@@ -22,8 +31,11 @@ test.describe('terminal interaction', () => {
 
   // ── Focus ──────────────────────────────────────────────────────────────────
 
-  test('terminal input is focused on page load', async ({ page }) => {
+  test('terminal only takes focus after intentional entry', async ({ page }) => {
     const input = page.locator('#terminal-input');
+    await expect(input).not.toBeFocused();
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
+    await page.getByRole('button', { name: 'Start typing' }).click();
     await expect(input).toBeFocused();
   });
 
@@ -304,10 +316,11 @@ test.describe('accessibility', () => {
   });
 
   test('skip-to-content link is focusable and visible on focus', async ({ page }) => {
-    // Focus the skip link directly and verify it's in the document
+    // Real first Tab, not a programmatic focus shortcut.
     const skipLink = page.locator('.skip-link');
     await expect(skipLink).toBeAttached();
-    await skipLink.focus();
+    await page.keyboard.press('Tab');
+    await expect(skipLink).toBeInViewport();
     await expect(skipLink).toBeFocused();
   });
 
@@ -317,8 +330,7 @@ test.describe('accessibility', () => {
     await page.waitForLoadState('networkidle');
     const btn = page.locator('[data-testid="theme-toggle"]');
     const html = page.locator('html');
-    // Focus the button and activate it with Enter
-    await btn.focus();
+    await tabTo(page, btn);
     await expect(btn).toBeFocused();
     await page.keyboard.press('Enter');
     await expect(html).toHaveAttribute('data-theme', 'light');
@@ -343,4 +355,245 @@ test.describe('reduced-motion', () => {
     await btn.click();
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   });
+});
+
+// These paths deliberately never call locator.focus()/press(), which would mask a Tab trap.
+test.describe('keyboard navigation', () => {
+  test.beforeEach(async ({ page }) => { await page.goto('/'); });
+
+  test('ordinary navigation reaches projects, terminal, output links, and footer', async ({ page }) => {
+    await page.keyboard.press('Tab');
+    await expect(page.locator('.skip-link')).toBeFocused();
+    await page.keyboard.press('Tab');
+    const projectsNav = page.getByRole('navigation').getByRole('link', { name: 'Projects', exact: true });
+    await expect(projectsNav).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#projects-heading')).toBeInViewport();
+    await page.keyboard.press('Tab');
+    await expect(page.locator('#projects a').first()).toBeFocused();
+    await tabTo(page, page.locator('#terminal-start'));
+    await page.keyboard.press('Enter');
+    const input = page.locator('#terminal-input');
+    await expect(input).toBeFocused();
+    await page.keyboard.type('links');
+    await page.keyboard.press('Enter');
+    await page.keyboard.press('Shift+Tab');
+    await expect(page.locator('#terminal-start')).toBeFocused();
+    await page.keyboard.press('Shift+Tab');
+    await expect(page.locator('#terminal-output a').last()).toBeFocused();
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Tab');
+    await expect(input).toBeFocused();
+    await page.keyboard.type('zzzzzz');
+    await page.keyboard.press('Tab');
+    await expect(page.locator('footer a').first()).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(page.locator('footer a').last()).toBeFocused();
+  });
+
+  for (const value of ['', 'pr', 'help', 'c', 'zzzzzz']) {
+    test(`Shift+Tab preserves backward navigation for ${JSON.stringify(value)}`, async ({ page }) => {
+      await tabTo(page, page.locator('#terminal-input'));
+      await page.keyboard.type(value);
+      await page.keyboard.press('Shift+Tab');
+      await expect(page.locator('#terminal-start')).toBeFocused();
+      await expect(page.locator('#terminal-input')).toHaveValue(value);
+    });
+  }
+
+  for (const value of ['help', 'c', 'zzzzzz']) {
+    test(`Tab exits without a changing completion for ${value}`, async ({ page }) => {
+      await tabTo(page, page.locator('#terminal-input'));
+      await page.keyboard.type(value);
+      await page.keyboard.press('Tab');
+      await expect(page.locator('footer a').first()).toBeFocused();
+    });
+  }
+
+  test('accept a suggestion once, then Tab out with a visible focus indicator', async ({ page }) => {
+    await tabTo(page, page.locator('#terminal-input'));
+    const outline = await page.locator('.input-wrap').evaluate(el => getComputedStyle(el).outlineWidth);
+    expect(parseFloat(outline)).toBeGreaterThanOrEqual(2);
+    await page.keyboard.type('pr');
+    await page.keyboard.press('Tab');
+    await expect(page.locator('#terminal-input')).toHaveValue('projects');
+    await page.keyboard.press('Tab');
+    await expect(page.locator('footer a').first()).toBeFocused();
+  });
+});
+
+test('text-only scrollback can be reached and scrolled with the keyboard', async ({ page }) => {
+  await page.goto('/');
+  await tabTo(page, page.locator('#terminal-input'));
+  await page.keyboard.type('clear');
+  await page.keyboard.press('Enter');
+  for (let i = 0; i < 5; i++) {
+    await page.keyboard.type('about');
+    await page.keyboard.press('Enter');
+  }
+  const log = page.getByRole('log', { name: 'Terminal output' });
+  await expect(log).toHaveAttribute('tabindex', '0');
+  await expect(log.locator('a')).toHaveCount(0);
+  await expect.poll(() => log.evaluate(el => el.scrollTop)).toBeGreaterThan(0);
+  await page.keyboard.press('Shift+Tab');
+  await expect(page.locator('#terminal-start')).toBeFocused();
+  await page.keyboard.press('Shift+Tab');
+  await expect(log).toBeFocused();
+  expect(parseFloat(await log.evaluate(el => getComputedStyle(el).outlineWidth))).toBeGreaterThanOrEqual(2);
+  const before = await log.evaluate(el => el.scrollTop);
+  await page.keyboard.press('PageUp');
+  await expect.poll(() => log.evaluate(el => el.scrollTop)).toBeLessThan(before);
+});
+
+for (const composition of [
+  { name: 'active composition', isComposing: true, keyCode: 13 },
+  { name: 'compositionend before keydown', isComposing: false, keyCode: 229 },
+]) {
+  test(`IME Enter confirms without submitting during ${composition.name}`, async ({ page }) => {
+    await page.goto('/');
+    const input = page.locator('#terminal-input');
+    const log = page.getByRole('log');
+    await input.fill('about');
+    const before = await log.innerText();
+    if (!composition.isComposing) {
+      await input.dispatchEvent('compositionend', { data: 'about' });
+    }
+    await input.dispatchEvent('keydown', { key: 'Enter', isComposing: composition.isComposing, keyCode: composition.keyCode });
+    await expect(input).toHaveValue('about');
+    expect(await log.innerText()).toBe(before);
+    await expect(log.locator('.entry-cmd')).toHaveCount(0);
+    await input.press('Enter');
+    await expect(input).toHaveValue('');
+    await expect(log.locator('.entry-cmd')).toHaveCount(1);
+    await expect(log.locator('.entry-cmd')).toHaveText('about');
+  });
+}
+
+for (const theme of ['dark', 'light']) {
+  test(`meaningful text has 4.5:1 contrast in ${theme} theme`, async ({ page }) => {
+    await page.addInitScript(theme => localStorage.setItem('theme', theme), theme);
+    await page.goto('/');
+    const input = page.locator('#terminal-input');
+    for (const command of ['about', 'projects', 'skills', 'contact', 'help']) {
+      await input.fill(command);
+      await input.press('Enter');
+    }
+    const samples = await page.evaluate(textContrast);
+    expect(samples.length).toBeGreaterThan(80);
+    expect(samples.filter(sample => sample.ratio < 4.5)).toEqual([]);
+    expect(samples.some(sample => sample.selector === 'input-ghost')).toBe(true);
+    await page.goto('/unknown-contrast-route');
+    expect((await page.evaluate(textContrast)).filter(sample => sample.ratio < 4.5)).toEqual([]);
+  });
+}
+
+test('long mobile input preserves native scrolling, caret navigation, selection, and editing', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  const input = page.locator('#terminal-input');
+  await input.click();
+  const value = 'long-command-'.repeat(15);
+  await page.keyboard.type(value);
+
+  async function geometry() {
+    return input.evaluate(el => {
+      const input = el as HTMLInputElement;
+      const mirror = document.getElementById('input-mirror')!;
+      const typed = document.getElementById('mirror-content')!;
+      const actual = getComputedStyle(input);
+      const visual = getComputedStyle(mirror);
+      const matrix = new DOMMatrix(getComputedStyle(typed).transform);
+      return {
+        font: actual.font, mirrorFont: visual.font,
+        spacing: actual.letterSpacing, mirrorSpacing: visual.letterSpacing,
+        scroll: input.scrollLeft, offset: -matrix.m41 || 0,
+        start: input.selectionStart, end: input.selectionEnd,
+        color: actual.color, fontSize: parseFloat(actual.fontSize),
+      };
+    });
+  }
+  await expect.poll(async () => (await geometry()).scroll).toBeGreaterThan(500);
+  await expect.poll(async () => Math.abs((await geometry()).scroll - (await geometry()).offset)).toBeLessThan(1);
+  let metrics = await geometry();
+  expect(metrics.font).toBe(metrics.mirrorFont);
+  expect(metrics.spacing).toBe(metrics.mirrorSpacing);
+  expect(metrics.fontSize).toBeGreaterThanOrEqual(16);
+  expect(metrics.color).not.toBe('rgba(0, 0, 0, 0)');
+  expect(metrics.start).toBe(value.length);
+  await page.keyboard.press('Home');
+  await expect.poll(async () => (await geometry()).scroll).toBe(0);
+  await expect.poll(async () => (await geometry()).offset).toBe(0);
+  await page.keyboard.press('End');
+  for (let i = 0; i < 7; i++) await page.keyboard.press('Shift+ArrowLeft');
+  metrics = await geometry();
+  expect(metrics.end! - metrics.start!).toBe(7);
+  await page.keyboard.type('edited');
+  await expect(input).toHaveValue(value.slice(0, -7) + 'edited');
+  await page.keyboard.press('ArrowLeft');
+  await page.keyboard.press('Backspace');
+  await expect(input).toHaveValue(value.slice(0, -7) + 'editd');
+  await expect.poll(async () => Math.abs((await geometry()).scroll - (await geometry()).offset)).toBeLessThan(1);
+  // Pointer caret placement is native too, with the mirror following its scroll.
+  await input.click({ position: { x: 25, y: 12 } });
+  metrics = await geometry();
+  expect(metrics.start).toBe(metrics.end);
+  expect(metrics.start).toBeLessThan(value.length);
+  await expect.poll(async () => Math.abs((await geometry()).scroll - (await geometry()).offset)).toBeLessThan(1);
+  await input.fill('pr');
+  await page.keyboard.press('Shift+ArrowRight');
+  await expect(input).toHaveValue('pr'); // Modified arrows keep native selection semantics.
+  await page.keyboard.press('Home');
+  await page.keyboard.press('Shift+End');
+  await page.keyboard.press('ArrowRight');
+  await expect(input).toHaveValue('pr'); // Collapse selection, do not accept completion.
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await input.fill('help');
+  await page.keyboard.press('Enter');
+  await expect.poll(() => page.locator('#terminal-output').evaluate(el =>
+    Math.abs(el.scrollHeight - el.clientHeight - el.scrollTop),
+  )).toBeLessThanOrEqual(1);
+  const lastLine = await page.locator('#terminal-output .entry-line').last().boundingBox();
+  const scrollback = await page.locator('#terminal-output').boundingBox();
+  expect(lastLine!.y + lastLine!.height).toBeLessThanOrEqual(scrollback!.y + scrollback!.height);
+});
+
+test('normal animation startup and output complete without stealing focus', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'webdriver', { get: () => false });
+    // Observe real GSAP style mutations; simply overriding webdriver is not proof of execution.
+    const observed = window as unknown as { animatedTerminal: boolean; animatedOutput: boolean };
+    observed.animatedTerminal = false;
+    observed.animatedOutput = false;
+    new MutationObserver(records => {
+      for (const record of records) {
+        if (!(record.target instanceof HTMLElement)) continue;
+        // With a busy render thread a tween may finish before this callback.
+        // Attribute history still proves it actually ran, unlike final CSS alone.
+        const styles = `${record.oldValue ?? ''};${record.target.getAttribute('style') ?? ''}`;
+        if (!styles.includes('transform:') || !styles.includes('opacity:')) continue;
+        if (record.target.matches('.terminal-window')) observed.animatedTerminal = true;
+        if (record.target.matches('.entry-output')) observed.animatedOutput = true;
+      }
+    }).observe(document, { subtree: true, attributes: true, attributeOldValue: true, attributeFilter: ['style'] });
+  });
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/');
+  await expect.poll(() => page.evaluate(() => (window as unknown as { animatedTerminal: boolean }).animatedTerminal)).toBe(true);
+  const welcome = page.locator('.terminal-entry--system .entry-line');
+  await expect(welcome.first()).toHaveText("Welcome to primetimetank21's terminal.");
+  await expect(welcome.last()).toHaveCSS('opacity', '1');
+  await expect(page.locator('.terminal-window')).toHaveCSS('transform', 'none');
+  await expect(page.locator('#terminal-input')).not.toBeFocused();
+  expect(await page.evaluate(() => scrollY)).toBe(0);
+  await page.getByRole('button', { name: 'Start typing' }).click();
+  await page.keyboard.type('help');
+  await page.keyboard.press('Enter');
+  const output = page.locator('.entry-output').last();
+  await expect(output).toContainText('Available commands');
+  await expect.poll(() => page.evaluate(() => (window as unknown as { animatedOutput: boolean }).animatedOutput)).toBe(true);
+  await expect(output).toHaveCSS('opacity', '1');
+  await expect(output).toHaveCSS('transform', 'none');
+  expect(errors).toEqual([]);
 });

@@ -6,12 +6,10 @@
  * Static terminal-chrome page (Tokyo Night). No interactive island.
  */
 import Layout from '../layouts/Layout.astro';
-
-const path = Astro.url.pathname;
 ---
 
 <Layout
-  title="404 — route not found | primetimetank21"
+  title="404 — Page not found | Earl Tankard Jr."
   description="The page you are looking for does not exist."
   canonicalURL="https://primetimetank21.github.io/404"
 >
@@ -36,30 +34,30 @@ const path = Astro.url.pathname;
         <div class="terminal-entry">
           <div class="entry-command">
             <span class="entry-prompt" aria-hidden="true">❯</span>
-            <span class="entry-cmd">GET <span class="path-text">{path}</span></span>
+            <span class="entry-cmd">HTTP 404</span>
           </div>
         </div>
 
         <!-- Error output -->
         <div class="error-output" role="alert">
-          <p class="error-line">
-            <span class="error-badge" aria-label="Error">✗</span>
-            <span>route not found: <code class="path-text">{path}</code></span>
-          </p>
-          <p class="error-sub">No such page.</p>
+          <h1 class="error-line">
+            <span class="error-badge" aria-hidden="true">✗</span>
+            <span>Page not found</span>
+          </h1>
+          <p class="error-sub">This page does not exist or may have moved.</p>
         </div>
 
         <!-- Home link -->
         <div class="home-prompt">
           <span class="prompt-glyph" aria-hidden="true">❯</span>
-          <a href="/" class="home-link" aria-label="Return to home terminal">
-            Return to terminal
+          <a href="/" class="home-link" aria-label="Return to portfolio">
+            Return to portfolio
           </a>
           <span class="cursor" aria-hidden="true"></span>
         </div>
 
         <!-- Hint -->
-        <p class="hint">Back in the terminal, type <code class="hint-cmd">help</code> to see what's available.</p>
+        <p class="hint">Explore projects, learn about me, or try the interactive terminal on the homepage.</p>
 
       </div><!-- /terminal-body -->
 
@@ -127,7 +125,10 @@ const path = Astro.url.pathname;
     color: var(--color-fg-subtle);
     user-select: none;
     letter-spacing: 0.02em;
-    margin-right: calc(3 * 0.75rem + 2 * var(--space-2));
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .terminal-title-spacer {
@@ -164,11 +165,6 @@ const path = Astro.url.pathname;
 
   .entry-cmd {
     color: var(--color-accent);
-  }
-
-  .path-text {
-    color: var(--color-warning);
-    font-family: var(--font-mono);
   }
 
   /* ─── Error output ───────────────────────────────────────────────────────── */
@@ -251,11 +247,6 @@ const path = Astro.url.pathname;
     color: var(--color-fg-muted);
     font-size: var(--font-size-sm);
     margin-top: var(--space-3);
-  }
-
-  .hint-cmd {
-    color: var(--color-info);
-    font-family: var(--font-mono);
   }
 
   /* ─── Responsive ─────────────────────────────────────────────────────────── */
