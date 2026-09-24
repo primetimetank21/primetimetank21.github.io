@@ -16,7 +16,7 @@
     "test:unit:watch": "vitest",
     "test:e2e": "playwright test tests/e2e/smoke.spec.ts tests/e2e/terminal.spec.ts",
     "test:visual": "playwright test tests/e2e/visual.spec.ts",
-    "test:visual:update": "playwright test tests/e2e/visual.spec.ts --update-snapshots",
+    "test:visual:update": "playwright test tests/e2e/visual.spec.ts --update-snapshots=all",
     "test": "npm run test:unit && npm run test:e2e"
   },
   "dependencies": {

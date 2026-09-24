@@ -103,6 +103,11 @@ test('target branch stays in checkout refs and a quoted environment variable, no
   assert.ok(commitStep.run.includes('git push origin HEAD:"$TARGET_BRANCH"'));
 });
 
+test('baseline update refreshes every image, including changes inside comparison tolerance', () => {
+  const pkg = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8'));
+  assert.equal(pkg.scripts['test:visual:update'], 'playwright test tests/e2e/visual.spec.ts --update-snapshots=all');
+});
+
 test('PR checks execute this workflow regression suite', () => {
   const checks = parse(readFileSync(
     new URL('../../.github/workflows/build-check.yml', import.meta.url), 'utf8',

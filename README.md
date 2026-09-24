@@ -67,7 +67,7 @@ npm run test
 
 The `Visual Regression (Linux baselines)` job in CI compares every PR's screenshots against committed Linux baselines. A diff = failure = the PR cannot merge. This is intentional: it catches accidental layout regressions.
 
-**When you make an intentional UI change** (new feature, style fix, a11y tweak), the baselines need to be refreshed so CI sees the intended result. That's what `Update Visual Baselines` is for.
+**When you make an intentional UI change** (new feature, style fix, a11y tweak), the baselines need to be refreshed so CI sees the intended result. That's what `Update Visual Baselines` is for. The update script uses `--update-snapshots=all`: even a small change inside the comparison tolerance must replace the old image so the reviewed baseline reflects the current page.
 
 ### Generate artifacts for review and a manual commit (review-first flow)
 
