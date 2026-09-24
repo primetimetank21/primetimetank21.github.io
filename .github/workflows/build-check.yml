@@ -50,6 +50,9 @@ jobs:
       - name: Run unit tests
         run: npm run test:unit
 
+      - name: Check visual-baseline workflow contracts
+        run: node --test tests/workflows/update-visual-baselines.test.mjs
+
   e2e-tests:
     name: E2E Tests (Playwright)
     runs-on: ubuntu-latest
@@ -86,7 +89,8 @@ jobs:
     # BLOCKING gate — compares against committed Linux baselines.
     # If baselines are stale (intentional UI change), run:
     #   Actions → Update Visual Baselines → branch: <your-pr-branch>
-    # This regenerates and commits PNGs to your PR branch; the check then re-runs green.
+    # Prefer commit_baselines=false to review/download artifacts before committing.
+    # Verify checks on the latest PR commit; bot events may need maintainer action.
     name: Visual Regression (Linux baselines)
     runs-on: ubuntu-latest
     container:

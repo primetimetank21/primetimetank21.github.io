@@ -85,7 +85,7 @@
   --color-bg-popup:     #16161e;
   --color-fg:           #c0caf5;
   --color-fg-muted:     #a9b1d6;
-  --color-fg-subtle:    #565f89;
+  --color-fg-subtle:    #a0a9cf;
 
   --color-accent:       #7aa2f7;   /* blue */
   --color-accent-alt:   #bb9af7;   /* purple */
@@ -95,7 +95,7 @@
   --color-info:         #7dcfff;   /* cyan */
 
   --color-prompt:       #9ece6a;   /* green — prompt glyph */
-  --color-ghost:        #565f89;   /* dim ghost-text */
+  --color-ghost:        #a0a9cf;   /* readable suggestion text */
   --color-cursor:       #c0caf5;
   --color-selection-bg: #33467c;
 
@@ -119,20 +119,20 @@
   --color-bg:           #e1e2e7;
   --color-bg-elevated:  #d0d5e3;
   --color-bg-popup:     #c4c8da;
-  --color-fg:           #3760bf;
-  --color-fg-muted:     #6172b0;
-  --color-fg-subtle:    #848cb8;
+  --color-fg:           #294b99;
+  --color-fg-muted:     #424f73;
+  --color-fg-subtle:    #465271;
 
-  --color-accent:       #2e7de9;   /* blue */
-  --color-accent-alt:   #9854f1;   /* purple */
-  --color-success:      #587539;   /* green */
-  --color-warning:      #8c6c3e;   /* yellow */
-  --color-error:        #f52a65;   /* red */
+  --color-accent:       #204f9b;   /* blue */
+  --color-accent-alt:   #713ab5;   /* purple */
+  --color-success:      #3e6127;   /* green */
+  --color-warning:      #715025;   /* yellow */
+  --color-error:        #a91a43;   /* red */
   --color-info:         #0f4b6e;   /* cyan */
 
-  --color-prompt:       #587539;
-  --color-ghost:        #848cb8;
-  --color-cursor:       #3760bf;
+  --color-prompt:       #3e6127;
+  --color-ghost:        #465271;
+  --color-cursor:       #294b99;
   --color-selection-bg: #b6bfe2;
 
   --color-border:        #9ea0af;

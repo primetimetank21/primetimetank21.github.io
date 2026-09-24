@@ -11,9 +11,10 @@
  *   - Command history (Up / Down recall)
  *   - `clear`, `theme`, `help`, `about`, `projects`, `contact` / `links`
  *   - aria-live="polite" output region
- *   - Focus management (input focused on mount, ESC clears input)
+ *   - Intentional focus only (click / keyboard entry; Escape clears input)
  *   - prefers-reduced-motion respected
  */
+import { PROFILE } from '../../lib/content';
 ---
 
 <div
@@ -45,6 +46,7 @@
       id="terminal-output"
       class="terminal-output"
       role="log"
+      tabindex="0"
       aria-live="polite"
       aria-atomic="false"
       aria-label="Terminal output"
@@ -57,36 +59,41 @@
           Welcome to <span class="hl-accent">primetimetank21</span>'s terminal.
         </span>
         <span class="entry-line hl-muted">
-          SWE @ Microsoft &mdash; prototype to production.
+          {PROFILE.role}
         </span>
-        <span class="entry-line hl-subtle">
+        <span class="entry-line hl-subtle" id="terminal-instructions">
           Type <kbd class="kbd">help</kbd> to get started,
           or press <kbd class="kbd">Tab</kbd> to accept a suggestion.
+          Tab again to move on; Shift+Tab always moves back.
         </span>
       </div>
     </div>
+
+    <noscript><p class="no-script">The terminal needs JavaScript. All projects, skills, and contact links are available above.</p></noscript>
+    <button id="terminal-start" class="terminal-start" type="button" hidden>Start typing</button>
 
     <!-- ── Input line ──────────────────────────────────────────────────────── -->
     <div
       id="terminal-input-line"
       class="terminal-input-line"
       aria-label="Terminal prompt"
+      hidden
     >
       <span class="prompt" aria-hidden="true">❯</span>
 
       <!--
         Grid-stacking trick:
         .input-wrap uses display:grid so .input-mirror and .real-input
-        share the same cell. The mirror defines the visual; the input
-        (transparent text, visible caret) sits on top and captures events.
+        share the same cell and font metrics. Native input text, caret, and
+        selection stay visible; the mirror only paints a ghost suffix.
       -->
       <div class="input-wrap">
         <!-- Visual mirror: typed text + ghost suffix -->
         <div class="input-mirror" id="input-mirror" aria-hidden="true">
-          <span id="input-typed" class="input-typed"></span><span
+          <span id="mirror-content"><span id="input-typed" class="input-typed"></span><span
             id="input-ghost"
             class="input-ghost"
-          ></span>
+          ></span></span>
         </div>
 
         <!-- Real input — captures all keyboard events -->
@@ -99,9 +106,9 @@
           autocapitalize="off"
           spellcheck="false"
           enterkeyhint="send"
-          aria-label="Terminal command input. Type help for available commands. Use Tab or right arrow to accept autocomplete, Up and Down arrows for history, Escape to clear."
-          aria-describedby="terminal-output"
+          aria-label="Terminal command input. Type help for available commands. Use Tab or right arrow to accept autocomplete, Up and Down arrows for history, Escape to clear. Shift+Tab moves back; Tab moves on when there is no completion."
           data-testid="terminal-input"
+          disabled
         />
       </div>
 
@@ -130,6 +137,19 @@ const inputEl     = document.getElementById('terminal-input')  as HTMLInputEleme
 const inputTyped  = document.getElementById('input-typed')     as HTMLSpanElement;
 const inputGhost  = document.getElementById('input-ghost')     as HTMLSpanElement;
 const tabChipEl   = document.getElementById('tab-chip')        as HTMLButtonElement;
+const mirrorContent = document.getElementById('mirror-content') as HTMLSpanElement;
+const startButton = document.getElementById('terminal-start') as HTMLButtonElement;
+
+// Native input scrolling can settle after key/selection events. Use its actual
+// offset, not a character-count estimate (also works for touch selection/paste).
+let mirrorFrame = 0;
+function syncMirrorScroll(): void {
+  mirrorContent.style.transform = `translateX(${-inputEl.scrollLeft}px)`;
+}
+function scheduleMirrorScroll(): void {
+  cancelAnimationFrame(mirrorFrame);
+  mirrorFrame = requestAnimationFrame(syncMirrorScroll);
+}
 
 const history = new TerminalHistory();
 
@@ -147,6 +167,7 @@ function updateMirror(): void {
 
   inputTyped.textContent = val;
   inputGhost.textContent = displayGhost;
+  scheduleMirrorScroll();
 
   // Show chip whenever there is a visible ghost (seed or real completion)
   tabChipEl.hidden = displayGhost === '';
@@ -158,19 +179,14 @@ function updateMirror(): void {
 
 // ─── Accept completion ────────────────────────────────────────────────────────
 
-function acceptCompletion(): void {
-  const val  = inputEl.value;
-  // Empty input → accept the seed ghost ('help')
-  if (val === '') {
-    inputEl.value = 'help';
-    updateMirror();
-    return;
-  }
-  const full = getCompletion(val);
-  if (full && full.length > val.length) {
-    inputEl.value = full;
-    updateMirror();
-  }
+function acceptCompletion(): boolean {
+  const val = inputEl.value;
+  const full = val === '' ? 'help' : getCompletion(val);
+  if (!full || full.length <= val.length) return false;
+  inputEl.value = full;
+  inputEl.setSelectionRange(full.length, full.length);
+  updateMirror();
+  return true;
 }
 
 // ─── Escape HTML ─────────────────────────────────────────────────────────────
@@ -274,9 +290,6 @@ function appendEntry(cmdText: string, lines: string[]): void {
 
   // Staggered output reveal (M3)
   revealOutputEntry(entry);
-
-  // Autoscroll to bottom
-  outputEl.scrollTop = outputEl.scrollHeight;
 }
 
 // ─── Submit ───────────────────────────────────────────────────────────────────
@@ -304,22 +317,40 @@ function handleSubmit(): void {
   inputEl.value = '';
   updateMirror();
   inputEl.focus();
+  // The suggestion chip can resize the input row after submit. Scroll only
+  // after that layout settles so the final output line remains fully visible.
+  requestAnimationFrame(() => { outputEl.scrollTop = outputEl.scrollHeight; });
 }
 
 // ─── Keyboard handler ─────────────────────────────────────────────────────────
 
 inputEl.addEventListener('input', updateMirror);
+inputEl.addEventListener('scroll', syncMirrorScroll);
+for (const event of ['keyup', 'click', 'select', 'focus']) {
+  inputEl.addEventListener(event, scheduleMirrorScroll);
+}
+document.addEventListener('selectionchange', () => {
+  if (document.activeElement === inputEl) scheduleMirrorScroll();
+});
+new ResizeObserver(scheduleMirrorScroll).observe(inputEl);
 
 inputEl.addEventListener('keydown', (e: KeyboardEvent) => {
+  // Some IMEs dispatch compositionend before the confirming Enter keydown.
+  // In that sequence isComposing is false but the legacy keyCode is 229.
+  if (e.isComposing || e.keyCode === 229) return;
   switch (e.key) {
     case 'Tab': {
-      e.preventDefault();
-      acceptCompletion();
+      // Never intercept backward navigation or a Tab that changes nothing.
+      if (!e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey && acceptCompletion()) {
+        e.preventDefault();
+      }
       break;
     }
     case 'ArrowRight': {
       // Accept only when cursor is at end of input
-      if (inputEl.selectionStart === inputEl.value.length) {
+      if (!e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey &&
+          inputEl.selectionStart === inputEl.value.length &&
+          inputEl.selectionEnd === inputEl.value.length) {
         const val = inputEl.value;
         // Seed case: empty input has 'help' as ghost
         const full = val === '' ? 'help' : getCompletion(val);
@@ -336,19 +367,22 @@ inputEl.addEventListener('keydown', (e: KeyboardEvent) => {
       break;
     }
     case 'ArrowUp': {
+      if (e.shiftKey || e.ctrlKey || e.altKey || e.metaKey) break;
       e.preventDefault();
       const prev = history.up();
       if (prev !== null) {
         inputEl.value = prev;
-        // Move cursor to end after React-style batching
+        // Move the native caret to the end of the recalled command.
         requestAnimationFrame(() => {
           inputEl.setSelectionRange(prev.length, prev.length);
+          scheduleMirrorScroll();
         });
         updateMirror();
       }
       break;
     }
     case 'ArrowDown': {
+      if (e.shiftKey || e.ctrlKey || e.altKey || e.metaKey) break;
       e.preventDefault();
       const next = history.down();
       if (next !== null) {
@@ -376,16 +410,19 @@ tabChipEl.addEventListener('click', () => {
 // ─── Click terminal body → focus input ───────────────────────────────────────
 
 document.querySelector('.terminal-body')?.addEventListener('click', (e: Event) => {
-  if (!(e.target as Element).closest('.tab-chip')) {
+  // Do not steal focus from links/buttons or interfere with text selection.
+  if (!(e.target as Element).closest('a, button, input, [role="log"]') && !window.getSelection()?.toString()) {
     inputEl.focus();
   }
 });
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
+inputEl.disabled = false;
+document.getElementById('terminal-input-line')!.hidden = false;
+startButton.hidden = false;
+startButton.addEventListener('click', () => inputEl.focus());
 updateMirror();
-// Focus after a frame to ensure layout is settled
-requestAnimationFrame(() => inputEl.focus());
 
 // ─── M3: Boot-up animation + welcome typewriter ───────────────────────────────
 
@@ -401,6 +438,8 @@ requestAnimationFrame(() => inputEl.focus());
     const line1 = welcomeLines[0] as HTMLElement;
     const restLines = welcomeLines.slice(1);
 
+    const welcomeText = line1.textContent?.trim() ?? '';
+    const welcomeMarkup = line1.innerHTML;
     // Stash then clear first line so we can type it back
     line1.textContent = '\u00a0'; // NBSP preserves row height during boot-up
     restLines.forEach(l => ((l as HTMLElement).style.opacity = '0'));
@@ -413,7 +452,7 @@ requestAnimationFrame(() => inputEl.focus());
 
     // Typewriter on intro line
     line1.textContent = '';
-    await typeText(line1, "Welcome to primetimetank21's terminal.", {
+    await typeText(line1, welcomeText, {
       charDelay: Number(
         getComputedStyle(document.documentElement)
           .getPropertyValue('--duration-type')
@@ -422,8 +461,7 @@ requestAnimationFrame(() => inputEl.focus());
       ) || 28,
     });
     // Re-apply accent span around the username after typing completes
-    line1.innerHTML =
-      `Welcome to <span class="hl-accent">primetimetank21</span>'s terminal.`;
+    line1.innerHTML = welcomeMarkup;
 
     // Stagger-reveal remaining welcome lines
     restLines.forEach(l => ((l as HTMLElement).style.opacity = ''));
@@ -437,6 +475,7 @@ requestAnimationFrame(() => inputEl.focus());
 .terminal-window {
   width: 100%;
   max-width: var(--terminal-max-width);
+  height: 480px;
   min-height: var(--terminal-min-height);
   display: flex;
   flex-direction: column;
@@ -491,8 +530,10 @@ requestAnimationFrame(() => inputEl.focus());
   color: var(--color-fg-subtle);
   user-select: none;
   letter-spacing: 0.02em;
-  /* Push title to visual center accounting for dots */
-  margin-right: calc(3 * 0.75rem + 2 * var(--space-2));
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .terminal-title-spacer {
@@ -505,6 +546,7 @@ requestAnimationFrame(() => inputEl.focus());
   display: flex;
   flex-direction: column;
   flex: 1;
+  min-height: 0;
   padding: var(--terminal-padding-y) var(--terminal-padding-x);
   font-family: var(--font-mono);
   font-size: var(--terminal-font-size);
@@ -522,7 +564,12 @@ requestAnimationFrame(() => inputEl.focus());
   padding-bottom: var(--space-2);
 }
 
-.terminal-entry {
+.terminal-output:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.terminal-output :global(.terminal-entry) {
   margin-bottom: var(--space-3);
 }
 
@@ -537,18 +584,18 @@ requestAnimationFrame(() => inputEl.focus());
   word-break: break-word;
 }
 
-.entry-command {
+.terminal-output :global(.entry-command) {
   display: flex;
   gap: var(--space-2);
   color: var(--color-fg);
 }
 
-.entry-prompt {
+.terminal-output :global(.entry-prompt) {
   color: var(--color-prompt);
   flex-shrink: 0;
 }
 
-.entry-cmd {
+.terminal-output :global(.entry-cmd) {
   color: var(--color-accent);
 }
 
@@ -613,44 +660,64 @@ requestAnimationFrame(() => inputEl.focus());
   grid-area: 1 / 1; /* Stack all children in the same grid cell */
 }
 
-.input-mirror {
+.input-mirror,
+.real-input {
   font-family: var(--font-mono);
-  font-size: var(--terminal-font-size);
+  font-size: max(1rem, var(--terminal-font-size));
   line-height: var(--line-height-mono);
+  font-weight: 400;
+  font-variant-ligatures: none;
+  letter-spacing: normal;
+  padding: 0.125rem 0;
+}
+
+.input-wrap:focus-within {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+.input-mirror {
   white-space: pre;
   overflow: hidden;
   pointer-events: none;
   user-select: none;
-  padding: 0.125rem 0;
-  /* Min height so the row doesn't collapse when empty */
-  min-height: calc(var(--terminal-font-size) * var(--line-height-mono) + 0.25rem);
+  min-width: 0;
+  min-height: 1.75rem;
 }
 
-.input-typed {
-  color: var(--color-fg);
-}
+#mirror-content { display: block; width: max-content; }
+.input-typed { color: transparent; }
 
 .input-ghost {
   color: var(--color-ghost);
-  opacity: 0.7;
 }
 
 .real-input {
-  font-family: var(--font-mono);
-  font-size: var(--terminal-font-size);
-  line-height: var(--line-height-mono);
-  padding: 0.125rem 0;
   background: transparent;
   border: none;
   outline: none;
-  /* Transparent text — visual rendering handled by .input-mirror */
-  color: transparent;
+  /* Native text/selection stay visible; only the suffix comes from the mirror. */
+  color: var(--color-fg);
   caret-color: var(--color-cursor);
   width: 100%;
   min-width: 0;
   /* Prevent layout shift from scrolling offset; mirror handles overflow */
   overflow: hidden;
 }
+
+.terminal-start {
+  align-self: flex-start;
+  margin-block: var(--space-2) var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  font: inherit;
+  color: var(--color-accent);
+  background: var(--color-bg-popup);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+.no-script { color: var(--color-fg-muted); }
 
 /* ─── Mobile tab chip ────────────────────────────────────────────────────── */
 .tab-chip {
@@ -701,7 +768,8 @@ requestAnimationFrame(() => inputEl.focus());
 @media (max-width: 600px) {
   .terminal-window {
     border-radius: var(--radius-lg);
-    min-height: 60dvh;
+    height: 480px;
+    min-height: 420px;
   }
 
   .terminal-title {
@@ -711,11 +779,6 @@ requestAnimationFrame(() => inputEl.focus());
   .terminal-body {
     padding: var(--terminal-padding-y) var(--space-3);
     font-size: var(--font-size-sm);
-  }
-
-  /* Prevent iOS viewport zoom on input focus (triggers when font-size < 16px) */
-  .real-input {
-    font-size: 1rem;
   }
 
   /* Minimum 44px tap target for the tab chip */
