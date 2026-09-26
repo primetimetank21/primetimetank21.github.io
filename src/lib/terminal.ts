@@ -53,7 +53,7 @@ export type OutputType = 'output' | 'clear' | 'theme';
 
 export interface CommandLink {
   label: string;
-  href: CaseStudyProject['caseStudy']['path'];
+  href: '/about/' | CaseStudyProject['caseStudy']['path'];
 }
 
 export interface CommandResult {
@@ -63,9 +63,12 @@ export interface CommandResult {
   openPath?: CommandLink['href'];
 }
 
-const OPEN_DESTINATIONS = Object.fromEntries(CASE_STUDIES.map(project => [
-  project.name, { label: project.name, href: project.caseStudy.path },
-]));
+const OPEN_DESTINATIONS: Record<string, CommandLink> = Object.fromEntries([
+  ['about', { label: 'about', href: '/about/' }],
+  ...CASE_STUDIES.map(project => [
+    project.name, { label: project.name, href: project.caseStudy.path },
+  ]),
+]);
 const OPEN_USAGE = `Usage: open [${Object.keys(OPEN_DESTINATIONS).join(' | ')}]`;
 
 /** Execute a command string and return a structured result */
@@ -77,7 +80,7 @@ export function executeCommand(raw: string): CommandResult {
     if (args.length === 0) {
       return {
         type: 'output',
-        lines: ['Case studies (links open in a new tab):', OPEN_USAGE],
+        lines: ['Pages (links open in a new tab):', OPEN_USAGE],
         links: Object.values(OPEN_DESTINATIONS),
       };
     }
@@ -103,7 +106,7 @@ export function executeCommand(raw: string): CommandResult {
           "  help      \u2014 show this message",
           "  about     \u2014 who I am",
           "  projects  \u2014 things I've built",
-          "  open      \u2014 list case studies; open <name> requests a new tab",
+          "  open      \u2014 list pages; open <name> requests a new tab",
           "  skills    \u2014 tech stack  (alias: tech)",
           "  contact   \u2014 links & contact info  (alias: links)",
           "  theme     \u2014 toggle light / dark theme",

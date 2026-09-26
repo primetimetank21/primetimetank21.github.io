@@ -1,0 +1,80 @@
+---
+import Layout from '../layouts/Layout.astro';
+import ThemeToggle from '../components/ThemeToggle.astro';
+import { PROFILE, ABOUT_PARAGRAPHS, SKILL_GROUPS, CASE_STUDIES, CONTACT } from '../lib/content';
+---
+
+<Layout
+  title={`About | ${PROFILE.name}`}
+  description={`${PROFILE.role}. ${PROFILE.summary}`}
+  canonicalURL={new URL('/about/', Astro.site).href}
+>
+  <div slot="nav-extra" class="nav-links">
+    <a href="/">Home</a>
+    <a href="/about/" aria-current="page">About</a>
+    <a href="/#projects">Projects</a>
+    <a href="/#contact">Contact</a>
+    <a href="/#terminal">Terminal</a>
+  </div>
+  <ThemeToggle slot="header-actions" />
+
+  <article class="about-page" aria-labelledby="about-title">
+    <header class="about-heading">
+      <p class="eyebrow">About</p>
+      <h1 id="about-title">{PROFILE.name}</h1>
+      <p class="role">{PROFILE.role}</p>
+      <p class="summary">{PROFILE.summary}</p>
+    </header>
+
+    <section aria-labelledby="biography-heading">
+      <h2 id="biography-heading">How I work</h2>
+      <div class="biography">{ABOUT_PARAGRAPHS.map(paragraph => <p>{paragraph}</p>)}</div>
+    </section>
+
+    <section aria-labelledby="skills-heading">
+      <h2 id="skills-heading">Skills &amp; tools</h2>
+      <dl class="skills">
+        {SKILL_GROUPS.map(group => <div><dt>{group.label}</dt><dd>{group.items.join(' · ')}</dd></div>)}
+      </dl>
+    </section>
+
+    <section aria-labelledby="work-heading">
+      <h2 id="work-heading">Public work</h2>
+      <ul class="study-links">
+        {CASE_STUDIES.map(project => <li><a href={project.caseStudy.path}>{project.name} — {project.caseStudy.title}</a></li>)}
+      </ul>
+    </section>
+
+    <section aria-labelledby="contact-heading">
+      <h2 id="contact-heading">Contact</h2>
+      <p>{CONTACT.summary}</p>
+      <ul class="contact-links">
+        {CONTACT.links.map(link => <li><a href={link.url}>{link.label}</a></li>)}
+      </ul>
+    </section>
+  </article>
+</Layout>
+
+<style>
+  .nav-links { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); font-size: var(--font-size-sm); }
+  .nav-links a { padding-block: var(--space-2); }
+  .nav-links [aria-current='page'] { color: var(--color-fg); font-weight: 700; }
+  .about-page { width: 100%; max-width: 76ch; }
+  .about-heading { margin-block: var(--space-4) var(--space-8); }
+  .eyebrow { color: var(--color-success); font-size: var(--font-size-sm); margin-bottom: var(--space-4); }
+  h1 { font-size: clamp(1.75rem, 4vw, 2.5rem); line-height: var(--line-height-tight); letter-spacing: -0.03em; }
+  .role { color: var(--color-accent); font-size: var(--font-size-lg); margin-top: var(--space-5); }
+  .summary { margin-top: var(--space-5); }
+  p, dd { color: var(--color-fg-muted); line-height: var(--line-height-normal); }
+  section + section { margin-top: var(--space-8); }
+  h2 { font-size: var(--font-size-xl); line-height: var(--line-height-tight); margin-bottom: var(--space-4); }
+  .biography p + p { margin-top: var(--space-5); }
+  .skills { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5) var(--space-8); }
+  .skills dt { color: var(--color-accent-alt); font-size: var(--font-size-sm); margin-bottom: var(--space-1); }
+  .study-links { display: grid; gap: var(--space-4); list-style: none; }
+  .contact-links { display: flex; flex-wrap: wrap; gap: var(--space-4) var(--space-6); list-style: none; margin-top: var(--space-4); }
+  @media (max-width: 600px) {
+    .skills { grid-template-columns: 1fr; }
+    .role { font-size: var(--font-size-md); }
+  }
+</style>

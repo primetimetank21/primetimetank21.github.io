@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { CASE_STUDIES } from '../../src/lib/content';
+import { CASE_STUDIES, PROFILE } from '../../src/lib/content';
 
 /** Blocking visual gate. Refresh baselines only in the pinned official
  * Playwright container, review the PNGs, and follow README's approval/check flow.
@@ -30,6 +30,14 @@ for (const theme of ['dark', 'light']) {
         for (const summary of await page.locator('.featured-projects summary').all()) await summary.click();
         await expect(page.locator('.featured-projects details[open]')).toHaveCount(2);
         await expect(page).toHaveScreenshot(`homepage-expanded-${theme}-${viewport.name}.png`, { fullPage: true, animations: 'disabled' });
+      });
+
+      test(`about — ${viewport.name}`, async ({ page }) => {
+        await page.setViewportSize(viewport);
+        await page.goto('/about/');
+        await page.evaluate(() => document.fonts.ready);
+        await expect(page.locator('h1')).toHaveText(PROFILE.name);
+        await expect(page).toHaveScreenshot(`about-${theme}-${viewport.name}.png`, { fullPage: true, animations: 'disabled' });
       });
 
       for (const project of CASE_STUDIES) {

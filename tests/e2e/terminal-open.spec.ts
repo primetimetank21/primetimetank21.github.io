@@ -1,5 +1,10 @@
 import { test, expect, type Page } from '@playwright/test';
-import { CASE_STUDIES } from '../../src/lib/content';
+import { CASE_STUDIES, PROFILE } from '../../src/lib/content';
+
+const destinations = [
+  { name: 'about', path: '/about/', title: PROFILE.name },
+  ...CASE_STUDIES.map(project => ({ name: project.name, path: project.caseStudy.path, title: project.caseStudy.title })),
+];
 
 type OpenCall = { path: string; target?: string; features?: string; active: boolean; inEnter: boolean; entries: number; returnedNull?: boolean };
 type ObservedWindow = Window & { openCalls: OpenCall[] };
@@ -49,59 +54,59 @@ async function checkNewTab(tab: Page, source: Page, path: string, title: string)
   await tab.close();
 }
 
-for (const project of CASE_STUDIES) {
+for (const destination of destinations) {
   for (const width of [1280, 390]) {
-    test(`open ${project.name} requests a real isolated tab synchronously at ${width}px`, async ({ page, context }) => {
+    test(`open ${destination.name} requests a real isolated tab synchronously at ${width}px`, async ({ page, context }) => {
       await page.setViewportSize({ width, height: 844 });
       await observeOpen(page);
       // Exercise the real animated path too; open must precede output animation.
       await page.addInitScript(() => Object.defineProperty(navigator, 'webdriver', { get: () => false }));
       await page.goto('/');
       const input = page.locator('#terminal-input');
-      await input.fill(`  OpEn \t ${project.name.toUpperCase()}  `);
+      await input.fill(`  OpEn \t ${destination.name.toUpperCase()}  `);
       const tabPromise = context.waitForEvent('page');
       await input.press('Enter');
-      await checkNewTab(await tabPromise, page, project.caseStudy.path, project.caseStudy.title);
+      await checkNewTab(await tabPromise, page, destination.path, destination.title);
       expect(await calls(page)).toEqual([{
-        path: project.caseStudy.path, target: '_blank', features: 'noopener,noreferrer',
+        path: destination.path, target: '_blank', features: 'noopener,noreferrer',
         active: true, inEnter: true, entries: 0, returnedNull: true,
       }]);
       await expect(input).toHaveValue('');
       const output = page.locator('#terminal-output .terminal-entry').last();
       await expect(output).toContainText('New tab requested. If it did not appear, use the link below:');
       await expect(output).not.toContainText(/blocked|tab opened/i);
-      const fallback = output.getByRole('link', { name: `${project.name} (opens in a new tab)` });
-      await expect(fallback).toHaveAttribute('href', project.caseStudy.path);
+      const fallback = output.getByRole('link', { name: `${destination.name} (opens in a new tab)` });
+      await expect(fallback).toHaveAttribute('href', destination.path);
       await expect(fallback).toHaveAttribute('target', '_blank');
       await expect(fallback).toHaveAttribute('rel', 'noopener noreferrer');
       const fallbackTab = context.waitForEvent('page');
       await fallback.click();
-      await checkNewTab(await fallbackTab, page, project.caseStudy.path, project.caseStudy.title);
+      await checkNewTab(await fallbackTab, page, destination.path, destination.title);
       expect(await calls(page)).toHaveLength(1); // the fallback uses native anchor behavior
       expect(new URL(page.url()).pathname).toBe('/');
     });
   }
 
   for (const mode of ['null', 'throw'] as const) {
-    test(`${mode} window.open for ${project.name} keeps an honest usable fallback and terminal`, async ({ page, context }) => {
+    test(`${mode} window.open for ${destination.name} keeps an honest usable fallback and terminal`, async ({ page, context }) => {
       await observeOpen(page, mode);
       const errors: string[] = [];
       page.on('pageerror', error => errors.push(error.message));
       await page.goto('/');
       const input = page.locator('#terminal-input');
-      await input.fill(`open ${project.name}`);
+      await input.fill(`open ${destination.name}`);
       await input.press('Enter');
       expect(context.pages()).toHaveLength(1);
       expect(await calls(page)).toHaveLength(1);
       const entry = page.locator('#terminal-output .terminal-entry').last();
       await expect(entry).toContainText(mode === 'throw' ? 'Could not request a new tab. Use the link below:' : 'New tab requested. If it did not appear, use the link below:');
       await expect(entry).not.toContainText(/blocked|tab opened/i);
-      const fallback = entry.getByRole('link', { name: `${project.name} (opens in a new tab)` });
+      const fallback = entry.getByRole('link', { name: `${destination.name} (opens in a new tab)` });
       const tabPromise = context.waitForEvent('page');
       await fallback.click();
-      await checkNewTab(await tabPromise, page, project.caseStudy.path, project.caseStudy.title);
+      await checkNewTab(await tabPromise, page, destination.path, destination.title);
       await input.press('ArrowUp');
-      await expect(input).toHaveValue(`open ${project.name}`);
+      await expect(input).toHaveValue(`open ${destination.name}`);
       await input.press('Escape');
       await input.fill('help');
       await input.press('Enter');
@@ -113,7 +118,7 @@ for (const project of CASE_STUDIES) {
   }
 }
 
-test('bare open completes, lists exactly two native new-tab links and does not call window.open', async ({ page, context }) => {
+test('bare open completes, lists exactly three native new-tab links and does not call window.open', async ({ page, context }) => {
   await observeOpen(page, 'throw');
   await page.goto('/');
   const input = page.locator('#terminal-input');
@@ -122,15 +127,15 @@ test('bare open completes, lists exactly two native new-tab links and does not c
   await expect(input).toHaveValue('open');
   await input.press('Enter');
   const links = page.locator('#terminal-output .entry-output a');
-  await expect(links).toHaveCount(2);
-  for (const project of CASE_STUDIES) {
-    const link = links.filter({ hasText: `${project.name} (opens in a new tab)` });
-    await expect(link).toHaveAttribute('href', project.caseStudy.path);
+  await expect(links).toHaveText(['about (opens in a new tab)', 'dev-setup (opens in a new tab)', 'phission (opens in a new tab)']);
+  for (const destination of destinations) {
+    const link = links.filter({ hasText: `${destination.name} (opens in a new tab)` });
+    await expect(link).toHaveAttribute('href', destination.path);
     await expect(link).toHaveAttribute('target', '_blank');
     await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
     const tabPromise = context.waitForEvent('page');
     await link.click();
-    await checkNewTab(await tabPromise, page, project.caseStudy.path, project.caseStudy.title);
+    await checkNewTab(await tabPromise, page, destination.path, destination.title);
   }
   expect(await calls(page)).toEqual([]);
   await input.fill('help');
@@ -143,7 +148,9 @@ test('invalid arguments never call window.open or create arbitrary output links;
   await page.goto('/');
   const input = page.locator('#terminal-input');
   for (const argument of [
-    'missing', 'dev-setup extra', 'phission dev-setup', '/projects/dev-setup/', '../phission',
+    'missing', 'about extra', 'about phission', '/about/', 'about/', '../about', 'about/nested',
+    'about?x=1', 'about#skills', '%61bout', 'https://primetimetank21.github.io/about/',
+    'dev-setup extra', 'phission dev-setup', '/projects/dev-setup/', '../phission',
     'https://example.com', 'https://primetimetank21.github.io/projects/phission/', '//example.com',
     'javascript:alert(1)', 'constructor', '__proto__', 'toString', 'hasOwnProperty',
     '<img src=x onerror=alert(1)>', 'dev-setup/', 'phission#evidence',
@@ -153,7 +160,7 @@ test('invalid arguments never call window.open or create arbitrary output links;
       await input.press('Enter');
       const entry = page.locator('#terminal-output .terminal-entry').last();
       await expect(entry.locator('.entry-cmd')).toHaveText(`open ${argument}`);
-      await expect(entry.locator('.entry-output')).toHaveText('Usage: open [dev-setup | phission]Type `help` to see available commands.');
+      await expect(entry.locator('.entry-output')).toHaveText('Usage: open [about | dev-setup | phission]Type `help` to see available commands.');
       await expect(entry.locator('a, img, script')).toHaveCount(0);
       await expect(input).toHaveValue('');
       expect(await calls(page)).toEqual([]);

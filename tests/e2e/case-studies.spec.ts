@@ -199,7 +199,7 @@ test.describe('static case-study pages', () => {
     }
   }
 
-  for (const path of ['/projects/missing/', '/projects/dev-setup/nested/', '/projects/phission/nested/', '/projects/apple-music-playlist-converter/', '/about/']) {
+  for (const path of ['/projects/missing/', '/projects/dev-setup/nested/', '/projects/phission/nested/', '/projects/apple-music-playlist-converter/', '/about/nested/']) {
     test(`${path} remains a real 404`, async ({ page }) => {
       expect((await page.goto(path))?.status()).toBe(404);
       await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName('Page not found');
@@ -210,7 +210,7 @@ test.describe('static case-study pages', () => {
   }
 });
 
-test('sitemap contains exactly home and the two case-study routes', async ({ request }) => {
+test('sitemap contains exactly home, about and the two case-study routes', async ({ request }) => {
   const index = await request.get('/sitemap-index.xml');
   expect(index.status()).toBe(200);
   const sitemapURL = (await index.text()).match(/<loc>(.*?)<\/loc>/)![1];
@@ -219,6 +219,7 @@ test('sitemap contains exactly home and the two case-study routes', async ({ req
   const locations = [...(await sitemap.text()).matchAll(/<loc>(.*?)<\/loc>/g)].map(match => match[1]);
   expect(locations.sort()).toEqual([
     'https://primetimetank21.github.io/',
+    'https://primetimetank21.github.io/about/',
     ...CASE_STUDIES.map(project => `https://primetimetank21.github.io${project.caseStudy.path}`),
   ].sort());
 });
