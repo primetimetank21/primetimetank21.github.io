@@ -127,7 +127,7 @@ import { PROFILE } from '../../lib/content';
 </div><!-- /terminal-window -->
 
 <script>
-import { executeCommand, getCompletion, TerminalHistory } from '../../lib/terminal.ts';
+import { executeCommand, getCompletion, TerminalHistory, type CommandLink } from '../../lib/terminal.ts';
 import { bootUpTerminal, revealWelcomeLines, revealOutputEntry } from '../../utils/animations.ts';
 import { typeText, shouldAnimate } from '../../utils/motion.ts';
 
@@ -246,7 +246,7 @@ function renderLineContent(el: HTMLElement, text: string): void {
 
 // ─── Append entry to scrollback ───────────────────────────────────────────────
 
-function appendEntry(cmdText: string, lines: string[]): void {
+function appendEntry(cmdText: string, lines: string[], links: readonly CommandLink[] = []): void {
   const entry = document.createElement('div');
   entry.className = 'terminal-entry';
 
@@ -259,7 +259,7 @@ function appendEntry(cmdText: string, lines: string[]): void {
   entry.appendChild(cmdLine);
 
   // Output lines
-  if (lines.length > 0) {
+  if (lines.length > 0 || links.length > 0) {
     const outDiv = document.createElement('div');
     outDiv.className = 'entry-output';
     // Inline styles replicate scoped CSS rules that won't reach dynamic elements
@@ -283,6 +283,19 @@ function appendEntry(cmdText: string, lines: string[]): void {
       }
       outDiv.appendChild(lineDiv);
     }
+    // Internal destinations are structured allowlisted data, not auto-linked input.
+    for (const link of links) {
+      const line = document.createElement('div');
+      line.className = 'entry-line';
+      const anchor = document.createElement('a');
+      anchor.className = 'case-study-link';
+      anchor.href = link.href;
+      anchor.textContent = `${link.label} (opens in a new tab)`;
+      anchor.target = '_blank';
+      anchor.rel = 'noopener noreferrer';
+      line.appendChild(anchor);
+      outDiv.appendChild(line);
+    }
     entry.appendChild(outDiv);
   }
 
@@ -303,6 +316,16 @@ function handleSubmit(): void {
 
   const result = executeCommand(trimmed);
 
+  if (result.openPath) {
+    // Stay in the Enter gesture, before output animations or asynchronous work.
+    // noopener may return null even on success; always offer an ordinary link.
+    try {
+      window.open(result.openPath, '_blank', 'noopener,noreferrer');
+    } catch {
+      result.lines = ['Could not request a new tab. Use the link below:'];
+    }
+  }
+
   if (result.type === 'clear') {
     while (outputEl.firstChild) {
       outputEl.removeChild(outputEl.firstChild);
@@ -311,7 +334,7 @@ function handleSubmit(): void {
     appendEntry(trimmed, []);
     window.dispatchEvent(new CustomEvent('toggle-theme'));
   } else {
-    appendEntry(trimmed, result.lines);
+    appendEntry(trimmed, result.lines, result.links);
   }
 
   inputEl.value = '';
@@ -608,6 +631,8 @@ updateMirror();
 .entry-output .entry-line {
   line-height: var(--line-height-normal);
 }
+
+.terminal-output :global(.case-study-link) { color: var(--color-info); }
 
 /* ─── Highlighting helpers ───────────────────────────────────────────────── */
 .hl-accent { color: var(--color-accent); }

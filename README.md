@@ -6,9 +6,30 @@
 ## Portfolio experience
 
 - Professional identity, project case studies, skills, and contact links are rendered at build time and work without JavaScript.
-- Ordinary navigation and the optional terminal share the copy in `src/lib/content.ts`; project evidence links and limitations are kept alongside the case studies.
+- Featured DevSetup and Phission cards start compact. Native **See more** disclosures expand independently with keyboard, touch, or JavaScript disabled. All flow, problem, approach, trade-off, evidence, and evidence links are present in the built HTML.
+- Visible **Read case study** links navigate normally in the same tab to `/projects/dev-setup/` and `/projects/phission/`. These static pages show the full studies, support no-JS navigation back to projects, and share the homepage's detail-body renderer and copy in `src/lib/content.ts`.
+- The seven projects and two studies remain the full public selection. This is **partial issue #9**: no About page, additional studies, or 404 redesign. Unknown and nested project routes remain real 404s. Phission remains a synthetic-only demo with the existing evidence and limitations; no live detection or historical usability claims are added.
 - The terminal retains commands, history, completion, and theme switching, with normal keyboard navigation, focusable scrollback, and native mobile text editing.
 - A résumé download is intentionally not shown until an actual public résumé asset is supplied.
+
+## Terminal commands and case-study routes
+
+| Command | Behavior |
+|---------|----------|
+| `help` | List commands |
+| `about` | Professional background |
+| `projects` | All seven projects and source links |
+| `skills` / `tech` | Skills and tools |
+| `contact` / `links` | Public contact links |
+| `open` | List clickable links to the two case studies; does not open a tab itself |
+| `open dev-setup` | Request `/projects/dev-setup/` in a new tab |
+| `open phission` | Request `/projects/phission/` in a new tab |
+| `theme` | Toggle light/dark theme |
+| `clear` | Clear terminal output |
+
+Commands ignore case and normalize whitespace. `open` accepts only the two names above, not URLs, paths, aliases, or extra arguments. Command-name completion includes `open`; argument completion is not provided.
+
+New-tab requests run synchronously from Enter with `noopener,noreferrer`. The terminal **always supplies an ordinary clickable fallback link**, labeled with new-tab intent. It never claims a tab definitely opened or was blocked: `window.open` can return `null` even on success with `noopener`. If the call throws, the link remains usable and the terminal continues working. Browsers and user preferences ultimately control tab/window behavior. Homepage **Read case study** links retain normal same-tab and native link controls.
 
 ## Stack
 
@@ -69,6 +90,8 @@ npm run test
 
 > ⚠️ **Generate baselines in the exact CI Playwright container: `mcr.microsoft.com/playwright:v1.61.1-noble`.**
 > A Linux host alone is not enough: differing fonts/browser libraries can change rendering. Do not commit host-generated screenshots as CI baselines.
+
+The visual suite covers collapsed and expanded homepages, both full case-study pages, terminal states, and 404s in light/dark desktop/mobile viewports. Viewports are emulated, not physical-device checks. Functional E2E separately covers native disclosures, no-JS pages, same-tab links, actual isolated new tabs, and fallback behavior.
 
 ### The visual check is a BLOCKING gate
 
@@ -139,7 +162,7 @@ git commit -m "test(visual): update Linux baselines"
 
 | Workflow | Trigger | Jobs |
 |----------|---------|------|
-| `Build & Check` | Pull request → `main` | Build · Type-check · Unit tests · E2E (smoke + terminal) · **Visual Regression (blocking)** |
+| `Build & Check` | Pull request → `main` | Build · Type-check · Unit tests · E2E (smoke + terminal + case studies) · **Visual Regression (blocking)** |
 | `Deploy to GitHub Pages` | Push to `main` | Build · Deploy |
 | `Update Visual Baselines` | Manual (`workflow_dispatch`, `branch` and `commit_baselines` inputs) | Regenerate + upload Linux snapshots; optionally commit/update branches and PRs (default: true) |
 
@@ -171,7 +194,8 @@ git commit -m "test(visual): update Linux baselines"
 ├── src/
 │   ├── __tests__/unit/        ← Vitest unit tests
 │   ├── components/
-│   │   ├── ProjectCard.astro           ← Static project/case-study presentation
+│   │   ├── ProjectCard.astro           ← Compact cards + native disclosures
+│   │   ├── CaseStudyBody.astro         ← Shared full study body (home + detail pages)
 │   │   ├── Terminal/
 │   │   │   └── TerminalShell.astro    ← Interactive terminal island
 │   │   └── ThemeToggle.astro
@@ -182,7 +206,8 @@ git commit -m "test(visual): update Linux baselines"
 │   │   └── terminal.ts                ← Pure terminal logic (Vitest-importable)
 │   ├── pages/
 │   │   ├── index.astro
-│   │   └── 404.astro                  ← On-brand "command not found" error page
+│   │   ├── projects/[slug].astro      ← Exactly two prerendered case-study routes
+│   │   └── 404.astro                  ← Truthful route-error page
 │   ├── styles/
 │   │   ├── tokens.css                 ← Design tokens (Tokyo Night dark + day)
 │   │   └── global.css
@@ -194,6 +219,8 @@ git commit -m "test(visual): update Linux baselines"
 │       ├── __snapshots__/             ← Linux-generated visual baselines
 │       ├── smoke.spec.ts              ← Page load + heading
 │       ├── terminal.spec.ts           ← Terminal interaction + a11y + reduced-motion
+│       ├── terminal-open.spec.ts      ← Real isolated tabs, fallbacks + invalid input
+│       ├── case-studies.spec.ts       ← Disclosures, no-JS routes, metadata + 404s
 │       └── visual.spec.ts             ← Visual regression (blocking)
 ├── astro.config.mjs
 ├── playwright.config.ts

@@ -3,7 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import ThemeToggle from '../components/ThemeToggle.astro';
 import TerminalShell from '../components/Terminal/TerminalShell.astro';
 import ProjectCard from '../components/ProjectCard.astro';
-import { PROFILE, ABOUT_PARAGRAPHS, PROJECTS, SKILL_GROUPS, CONTACT } from '../lib/content';
+import { PROFILE, ABOUT_PARAGRAPHS, PROJECTS, CASE_STUDIES, SKILL_GROUPS, CONTACT } from '../lib/content';
 ---
 
 <Layout>
@@ -35,7 +35,7 @@ import { PROFILE, ABOUT_PARAGRAPHS, PROJECTS, SKILL_GROUPS, CONTACT } from '../l
         <p>Tools, integrations, and experiments — with source you can explore.</p>
       </div>
       <div class="featured-projects">
-        {PROJECTS.filter(project => project.caseStudy).map(project => <ProjectCard project={project} />)}
+        {CASE_STUDIES.map(project => <ProjectCard project={project} />)}
       </div>
       <h3 class="other-heading">More projects</h3>
       <div class="other-projects">
@@ -101,6 +101,7 @@ import { PROFILE, ABOUT_PARAGRAPHS, PROJECTS, SKILL_GROUPS, CONTACT } from '../l
   h2 { font-size: var(--font-size-2xl); line-height: var(--line-height-tight); }
   .section-heading > p:last-child:not(.eyebrow) { margin-top: var(--space-3); color: var(--color-fg-muted); max-width: 72ch; }
   .featured-projects, .other-projects { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5); }
+  .featured-projects { align-items: start; }
   .other-heading { color: var(--color-fg-subtle); font-size: var(--font-size-base); margin: var(--space-8) 0 var(--space-4); }
   .about-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: var(--space-12); }
   .biography { color: var(--color-fg-muted); line-height: var(--line-height-normal); }

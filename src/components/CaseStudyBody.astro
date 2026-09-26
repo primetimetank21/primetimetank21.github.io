@@ -1,0 +1,41 @@
+---
+import type { CaseStudyProject } from '../lib/content';
+
+interface Props {
+  study: CaseStudyProject['caseStudy'];
+  headingLevel: 'h2' | 'h4';
+}
+const { study, headingLevel: Heading } = Astro.props;
+const sections = [
+  { title: 'Problem', text: study.problem },
+  { title: 'Approach', text: study.approach },
+  { title: 'Engineering trade-off', text: study.tradeoff },
+  { title: 'Evidence', text: study.evidence },
+];
+---
+
+<div class="case-study">
+  <ol class="flow" aria-label="Architecture flow">
+    {study.flow.map(step => <li>{step}</li>)}
+  </ol>
+  {sections.map(section => (
+    <section>
+      <Heading>{section.title}</Heading>
+      <p>{section.text}</p>
+    </section>
+  ))}
+  <ul class="evidence-links" aria-label="Evidence links">
+    {study.links.map(link => (
+      <li><a href={link.url} target="_blank" rel="noopener noreferrer">{link.label} <span aria-hidden="true">↗</span></a></li>
+    ))}
+  </ul>
+</div>
+
+<style>
+  .case-study { display: grid; gap: var(--space-5); }
+  .flow { list-style: none; display: flex; flex-wrap: wrap; gap: var(--space-2); padding-block: var(--space-3); border-block: 1px solid var(--color-border); color: var(--color-fg-subtle); font-size: var(--font-size-sm); }
+  .flow li:not(:last-child)::after { content: ' →'; color: var(--color-accent); }
+  h2, h4 { color: var(--color-accent-alt); font-size: var(--font-size-sm); font-weight: 700; margin-bottom: var(--space-1); }
+  p { color: var(--color-fg-muted); line-height: var(--line-height-normal); }
+  .evidence-links { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); list-style: none; font-size: var(--font-size-sm); }
+</style>
