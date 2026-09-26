@@ -49,6 +49,7 @@ test.describe('static About page', () => {
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 
       const nav = page.getByRole('navigation', { name: 'Site navigation' });
+      await expect(nav.getByRole('link')).toHaveText(['Home', 'About', 'Projects', 'Contact', 'Terminal']);
       await expect(nav.locator('[aria-current]')).toHaveCount(1);
       const current = nav.getByRole('link', { name: 'About', exact: true });
       await expect(current).toHaveAttribute('href', '/about/');
@@ -171,7 +172,7 @@ for (const width of [1280, 390]) {
     await page.goto('/about/');
     const nav = page.getByRole('navigation');
     await page.keyboard.press('Tab'); // Skip link
-    for (const label of ['Home', 'Projects', 'About', 'Contact', 'Terminal']) {
+    for (const label of ['Home', 'About', 'Projects', 'Contact', 'Terminal']) {
       await page.keyboard.press('Tab');
       const link = nav.getByRole('link', { name: label, exact: true });
       await expect(link).toBeFocused();
