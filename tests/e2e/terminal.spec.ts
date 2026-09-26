@@ -1,5 +1,6 @@
 import { test, expect, type Page, type Locator } from '@playwright/test';
 import { textContrast } from './helpers/contrast';
+import { PROJECTS } from '../../src/lib/content';
 
 async function tabTo(page: Page, target: Locator, backwards = false) {
   for (let i = 0; i < 50; i++) {
@@ -111,12 +112,14 @@ test.describe('terminal interaction', () => {
     await expect(output).toContainText('MAIDAP');
   });
 
-  test('projects command shows real projects with GitHub links', async ({ page }) => {
+  test('projects command shows every shared project description and status', async ({ page }) => {
     const input = page.locator('#terminal-input');
     const output = page.locator('#terminal-output');
     await input.pressSequentially('projects');
     await input.press('Enter');
-    await expect(output).toContainText('github.com');
+    for (const project of PROJECTS) {
+      await expect(output).toContainText(`${project.name} — ${project.description} [${project.status}]`);
+    }
   });
 
   test('skills command shows tech stack', async ({ page }) => {
@@ -160,7 +163,12 @@ test.describe('terminal interaction', () => {
     await input.pressSequentially('projects');
     await input.press('Enter');
     const links = page.locator('#terminal-output a[href^="https://github.com/primetimetank21/"]');
-    await expect(links).toHaveCount(6);
+    await expect(links).toHaveCount(7);
+    for (const [index, project] of PROJECTS.entries()) {
+      await expect(links.nth(index)).toHaveAttribute('href', project.url);
+      await expect(links.nth(index)).toHaveAttribute('target', '_blank');
+      await expect(links.nth(index)).toHaveAttribute('rel', 'noopener noreferrer');
+    }
   });
 
   test('projects command shows status tags', async ({ page }) => {

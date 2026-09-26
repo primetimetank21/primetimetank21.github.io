@@ -31,7 +31,7 @@ export const PROFILE = {
 export const ABOUT_PARAGRAPHS: readonly string[] = [
   `I'm ${PROFILE.name}, a Software Engineer in Microsoft's AI Development Acceleration Program (MAIDAP).`,
   'My focus is the work between a promising prototype and dependable software: clear interfaces, repeatable workflows, and tests that make changes easier to trust.',
-  'I use AI-assisted development alongside engineering fundamentals, code review, and deterministic checks. The featured public projects show my approach to developer tooling, API integration, and automation.',
+  'I use AI-assisted development alongside engineering fundamentals, code review, and deterministic checks. The featured public projects show my approach to developer tooling, human-centered interfaces, and automation.',
 ];
 
 export const ABOUT_LINES: readonly string[] = ABOUT_PARAGRAPHS.flatMap((paragraph, i) =>
@@ -62,24 +62,31 @@ export const PROJECTS: readonly Project[] = [
     },
   },
   {
+    name: 'phission',
+    description: 'A synthetic-only email safety demo for pausing, inspecting destinations, and understanding uncertain results.',
+    url: 'https://github.com/primetimetank21/phission',
+    status: 'completed',
+    caseStudy: {
+      title: 'From HCI prototype to a reproducible demo',
+      technologies: ['Python', 'Reflex', 'Pytest', 'Playwright'],
+      flow: ['Synthetic inbox', 'MIME + link parsing', 'Simulated result + guidance'],
+      problem: 'Unexpected messages can pressure people into following links or sharing secrets. Phission began as a 2023 HCI/affective-computing prototype; the refresh makes its email-inspection workflow reproducible without connecting a real inbox.',
+      approach: 'Bounded MIME parsing extracts readable text and HTTP(S) destinations without rendering email HTML. Typed validation distinguishes valid scores, including zero, from unknown and error states. Per-session state binds results to the selected message and link; keyboard-friendly controls and text explanations support inspection.',
+      tradeoff: 'Authored emails and simulated reputation results avoid mailbox and provider dependencies but do not establish phishing-detection accuracy. Parsing is deliberately limited; read-aloud is not included. Original usability findings are unavailable; no historical metrics or measured benefits are claimed.',
+      evidence: '115 Python tests on 3.13/3.14 cover parsing boundaries, score validation, and session isolation. Seventy browser checks include four automated accessibility scans. These validate the demo, not production mail security, full accessibility conformance, or physical-device support.',
+      links: [
+        { label: 'Parser coverage', url: 'https://github.com/primetimetank21/phission/blob/5bca9247a0f09a754db3c89c317a5f27dd92eb52/tests/test_html_boundaries.py' },
+        { label: 'Session isolation', url: 'https://github.com/primetimetank21/phission/blob/5bca9247a0f09a754db3c89c317a5f27dd92eb52/tests/test_state.py' },
+        { label: 'Local-build preview', url: 'https://github.com/primetimetank21/phission/blob/5bca9247a0f09a754db3c89c317a5f27dd92eb52/docs/demo-workspace.png' },
+        { label: 'Post-merge CI', url: 'https://github.com/primetimetank21/phission/actions/runs/36249730404' },
+      ],
+    },
+  },
+  {
     name: 'apple-music-playlist-converter',
     description: 'A Python CLI for recreating an Apple Music playlist in Spotify without searching for every track by hand.',
     url: 'https://github.com/primetimetank21/apple-music-playlist-converter',
     status: 'completed',
-    caseStudy: {
-      title: 'Best-effort playlist migration',
-      technologies: ['Python', 'Playwright', 'HTTPX', 'Spotipy'],
-      flow: ['Apple Music metadata', 'JSON', 'Spotify search + add'],
-      problem: 'Moving a playlist between services means reconstructing it across catalogs with different identifiers. The CLI connects metadata retrieval to Spotify search and playlist creation.',
-      approach: 'Playwright-driven Firefox retrieves the Apple Music web token. Paginated HTTP requests use bounded retries and write collected metadata to JSON. Spotipy handles Spotify OAuth, finds a playlist by name or creates a private one, then searches by title and artist and adds the first result.',
-      tradeoff: 'First-result matching can choose another recording, and reruns can add duplicates. Retrieval also depends on Apple’s web-page token format. This is a scoped, best-effort CLI, not an exact catalog synchronizer.',
-      evidence: 'The retrieval and matching source show the integration. Automated functional tests are absent and live-service reliability is unverified. Next validation steps: mocked pagination tests, matching fixtures, and an opt-in end-to-end conversion check.',
-      links: [
-        { label: 'Apple retrieval', url: 'https://github.com/primetimetank21/apple-music-playlist-converter/blob/8248770c4bdfa5ffeab9e2502ca6743359863ad3/src/apple_music_lib/get_apple_music.py' },
-        { label: 'Spotify matching', url: 'https://github.com/primetimetank21/apple-music-playlist-converter/blob/8248770c4bdfa5ffeab9e2502ca6743359863ad3/src/helpers/helper_functions.py#L16-L196' },
-        { label: 'Validation boundary', url: 'https://github.com/primetimetank21/apple-music-playlist-converter/blob/8248770c4bdfa5ffeab9e2502ca6743359863ad3/Makefile#L11-L24' },
-      ],
-    },
   },
   {
     name: 'PIT-UN-hackathon2023',
