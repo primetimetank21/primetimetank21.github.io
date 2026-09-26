@@ -1,18 +1,14 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import ThemeToggle from '../components/ThemeToggle.astro';
+import SiteNavLinks from '../components/SiteNavLinks.astro';
 import TerminalShell from '../components/Terminal/TerminalShell.astro';
 import ProjectCard from '../components/ProjectCard.astro';
 import { PROFILE, ABOUT_PARAGRAPHS, PROJECTS, CASE_STUDIES, SKILL_GROUPS, CONTACT } from '../lib/content';
 ---
 
 <Layout>
-  <div slot="nav-extra" class="nav-links">
-    <a href="#projects">Projects</a>
-    <a href="#about">About</a>
-    <a href="#contact">Contact</a>
-    <a href="#terminal">Terminal</a>
-  </div>
+  <SiteNavLinks slot="nav-extra" />
   <ThemeToggle slot="header-actions" />
 
   <div class="portfolio">
@@ -87,8 +83,6 @@ import { PROFILE, ABOUT_PARAGRAPHS, PROJECTS, CASE_STUDIES, SKILL_GROUPS, CONTAC
 
 <style>
   .portfolio { width: 100%; max-width: 1080px; }
-  .nav-links { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); font-size: var(--font-size-sm); }
-  .nav-links a { padding-block: var(--space-2); }
   section { scroll-margin-top: var(--space-8); }
   section + section { margin-top: var(--space-20); }
   .hero { padding: var(--space-8) 0 var(--space-4); max-width: 850px; }

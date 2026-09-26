@@ -120,6 +120,61 @@ test.describe('404 page', () => {
 });
 
 
+const navigation = [
+  ['Home', '/'], ['About', '/about/'], ['Projects', '/#projects'],
+  ['Contact', '/#contact'], ['Terminal', '/#terminal'],
+] as const;
+
+for (const route of ['/', '/about/', '/projects/dev-setup/', '/projects/phission/']) {
+  for (const javaScriptEnabled of [true, false]) {
+    test.describe(`shared navigation on ${route}, JS ${javaScriptEnabled}`, () => {
+      test.use({ javaScriptEnabled });
+      for (const width of [1280, 390]) {
+        test(`same ordered native links at ${width}px`, async ({ page, context }) => {
+          await page.setViewportSize({ width, height: 844 });
+          await page.goto(route);
+          const nav = page.getByRole('navigation', { name: 'Site navigation' });
+          await expect(nav.getByRole('link')).toHaveText(navigation.map(([label]) => label));
+          for (const [label, href] of navigation) {
+            const link = nav.getByRole('link', { name: label, exact: true });
+            await expect(link).toHaveAttribute('href', href);
+            expect(await link.getAttribute('target')).toBeNull();
+          }
+          const current = nav.locator('[aria-current="page"]');
+          if (route === '/' || route === '/about/') {
+            await expect(current).toHaveCount(1);
+            await expect(current).toHaveText(route === '/' ? 'Home' : 'About');
+          } else await expect(current).toHaveCount(0);
+          expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+          await nav.getByRole('link', { name: 'About', exact: true }).click();
+          await expect(page).toHaveURL('/about/');
+          await nav.getByRole('link', { name: 'Projects', exact: true }).click();
+          await expect(page).toHaveURL('/#projects');
+          await expect(page.locator('#projects-heading')).toBeInViewport();
+          await nav.getByRole('link', { name: 'Home', exact: true }).click();
+          await expect(page).toHaveURL('/');
+          await expect(page.locator('h1')).toBeInViewport();
+          expect(context.pages()).toHaveLength(1);
+        });
+      }
+    });
+  }
+  if (route !== '/about/') for (const width of [1280, 390]) {
+    test(`shared keyboard order on ${route} at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto(route);
+      await page.keyboard.press('Tab');
+      await expect(page.getByRole('link', { name: 'Skip to content' })).toBeFocused();
+      for (const [label] of navigation) {
+        await page.keyboard.press('Tab');
+        await expect(page.getByRole('navigation').getByRole('link', { name: label, exact: true })).toBeFocused();
+      }
+      await page.keyboard.press('Tab');
+      await expect(page.getByTestId('theme-toggle')).toBeFocused();
+    });
+  }
+}
+
 // Substantive HTML must be available without terminal interaction or JavaScript.
 test.describe('static portfolio', () => {
   test.use({ javaScriptEnabled: false });
@@ -132,7 +187,7 @@ test.describe('static portfolio', () => {
       await expect(main.getByRole('heading', { level: 1 })).toHaveText(PROFILE.name);
       for (const section of ['Projects', 'About', 'Contact', 'Terminal']) {
         await expect(page.getByRole('navigation').getByRole('link', { name: section, exact: true }))
-          .toHaveAttribute('href', `#${section.toLowerCase()}`);
+          .toHaveAttribute('href', section === 'About' ? '/about/' : `/#${section.toLowerCase()}`);
         await expect(main.locator(`#${section.toLowerCase()}`)).toBeVisible();
       }
       for (const paragraph of ABOUT_PARAGRAPHS) await expect(main).toContainText(paragraph);

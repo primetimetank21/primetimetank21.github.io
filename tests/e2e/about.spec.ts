@@ -10,9 +10,11 @@ test.describe('static About page', () => {
       await page.setViewportSize({ width, height: 844 });
       await page.goto('/');
       const aboutNav = page.getByRole('navigation').getByRole('link', { name: 'About', exact: true });
-      await expect(aboutNav).toHaveAttribute('href', '#about');
+      await expect(aboutNav).toHaveAttribute('href', '/about/');
       await aboutNav.click();
-      await expect(page).toHaveURL('/#about');
+      await expect(page).toHaveURL('/about/');
+      expect(context.pages()).toHaveLength(1);
+      await page.goto('/#about');
       await expect(page.locator('#about-heading')).toBeInViewport();
       await expect(page.locator('#about .biography p').filter({ hasNot: page.locator('a') })).toHaveText([...ABOUT_PARAGRAPHS]);
       const more = page.locator('#about').getByRole('link', { name: 'More about me', exact: true });
