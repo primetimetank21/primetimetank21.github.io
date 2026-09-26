@@ -102,6 +102,8 @@ import { PROFILE, ABOUT_PARAGRAPHS, PROJECTS, CASE_STUDIES, SKILL_GROUPS, CONTAC
   .section-heading > p:last-child:not(.eyebrow) { margin-top: var(--space-3); color: var(--color-fg-muted); max-width: 72ch; }
   .featured-projects, .other-projects { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5); }
   .featured-projects { align-items: start; }
+  /* Align collapsed cards; :global reaches disclosures inside ProjectCard. */
+  .featured-projects:global(:not(:has(details[open]))) { align-items: stretch; }
   .other-heading { color: var(--color-fg-subtle); font-size: var(--font-size-base); margin: var(--space-8) 0 var(--space-4); }
   .about-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: var(--space-12); }
   .biography { color: var(--color-fg-muted); line-height: var(--line-height-normal); }

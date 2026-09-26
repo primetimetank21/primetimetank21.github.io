@@ -59,6 +59,14 @@ for (const theme of ['dark', 'light']) {
       });
     }
 
+    test('featured cards collapsed — narrow desktop', async ({ page }) => {
+      await page.setViewportSize({ width: 960, height: 844 });
+      await page.goto('/');
+      await page.evaluate(() => document.fonts.ready);
+      await expect(page.locator('.featured-projects details[open]')).toHaveCount(0);
+      await expect(page.locator('.featured-projects')).toHaveScreenshot(`featured-collapsed-${theme}-narrow-desktop.png`, { animations: 'disabled' });
+    });
+
     test('terminal help output — desktop', async ({ page }) => {
       await page.setViewportSize({ width: 1280, height: 800 });
       await page.goto('/');
