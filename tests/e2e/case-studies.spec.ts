@@ -1,9 +1,92 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { CASE_STUDIES, PROFILE } from '../../src/lib/content';
+
+async function featuredCardGeometry(page: Page) {
+  return page.locator('.featured-projects article').evaluateAll(cards => cards.map(card => {
+    const { top, bottom, left, height } = card.getBoundingClientRect();
+    const links = card.querySelector('.project-links')!;
+    const linksBox = links.getBoundingClientRect();
+    const summary = card.querySelector('summary')!.getBoundingClientRect();
+    return {
+      top, bottom, left, height,
+      linksTop: linksBox.top, linksBottom: linksBox.bottom,
+      summaryTop: summary.top, summaryBottom: summary.bottom,
+      linkMarginTop: parseFloat(getComputedStyle(links).marginTop),
+    };
+  }));
+}
 
 for (const javaScriptEnabled of [true, false]) {
   test.describe(`native disclosures with JavaScript ${javaScriptEnabled ? 'on' : 'off'}`, () => {
     test.use({ javaScriptEnabled });
+
+    for (const width of [1440, 960]) {
+      test(`collapsed featured cards align bottoms, links and summaries at ${width}px`, async ({ page }) => {
+        await page.setViewportSize({ width, height: 844 });
+        await page.goto('/');
+        await page.evaluate(() => document.fonts.ready);
+        await expect(page.locator('.featured-projects details[open]')).toHaveCount(0);
+        const [first, second] = await featuredCardGeometry(page);
+        expect(second.left).toBeGreaterThan(first.left); // Exercise the two-column layout.
+        for (const edge of ['top', 'bottom', 'height', 'linksTop', 'linksBottom', 'summaryTop', 'summaryBottom'] as const) {
+          expect.soft(first[edge], `${edge} alignment`).toBeCloseTo(second[edge], 0);
+        }
+      });
+    }
+
+    for (const width of [1440, 960, 390, 320]) {
+      test(`featured cards retain natural independent sizing when expanded at ${width}px`, async ({ page }) => {
+        await page.setViewportSize({ width, height: 844 });
+        await page.goto('/');
+        await page.evaluate(() => document.fonts.ready);
+        const details = page.locator('.featured-projects details');
+        const first = details.nth(0);
+        const second = details.nth(1);
+        const collapsed = await featuredCardGeometry(page);
+        if (width <= 720) {
+          expect(collapsed[0].left).toBeCloseTo(collapsed[1].left, 0);
+          expect(collapsed[1].top).toBeGreaterThan(collapsed[0].bottom);
+          for (const card of collapsed) expect(card.linkMarginTop).toBeCloseTo(0, 0);
+        }
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+
+        await first.locator('summary').click();
+        await expect(first).toHaveAttribute('open');
+        await expect(second).not.toHaveAttribute('open');
+        const firstOpen = await featuredCardGeometry(page);
+        expect(firstOpen[0].height).toBeGreaterThan(collapsed[0].height);
+        // A closed desktop neighbor may shrink from its stretched collapsed height.
+        expect(firstOpen[1].height).toBeLessThanOrEqual(collapsed[1].height + 0.5);
+        if (width <= 720) expect(firstOpen[1].height).toBeCloseTo(collapsed[1].height, 0);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+
+        await second.locator('summary').click();
+        await expect(first).toHaveAttribute('open');
+        await expect(second).toHaveAttribute('open');
+        const bothOpen = await featuredCardGeometry(page);
+        expect(bothOpen[0].height).toBeCloseTo(firstOpen[0].height, 0);
+        expect(bothOpen[1].height).toBeGreaterThan(collapsed[1].height);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+
+        await first.locator('summary').click();
+        await expect(first).not.toHaveAttribute('open');
+        await expect(second).toHaveAttribute('open');
+        const secondOpen = await featuredCardGeometry(page);
+        expect(secondOpen[1].height).toBeCloseTo(bothOpen[1].height, 0);
+        expect(secondOpen[0].height).toBeLessThanOrEqual(collapsed[0].height + 0.5);
+        if (width <= 720) expect(secondOpen[0].height).toBeCloseTo(collapsed[0].height, 0);
+        // No stretched blank space in either card while any disclosure is open.
+        for (const state of [firstOpen, bothOpen, secondOpen]) {
+          for (const card of state) expect(card.linkMarginTop).toBeCloseTo(0, 0);
+        }
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+
+        await second.locator('summary').click();
+        await expect(page.locator('.featured-projects details[open]')).toHaveCount(0);
+        const reclosed = await featuredCardGeometry(page);
+        for (const index of [0, 1]) expect(reclosed[index].height).toBeCloseTo(collapsed[index].height, 0);
+      });
+    }
 
     for (const width of [1280, 390]) {
       test(`keyboard toggling is independent and keeps focus at ${width}px`, async ({ page }) => {
@@ -17,6 +100,7 @@ for (const javaScriptEnabled of [true, false]) {
         const summary = first.locator('summary');
         await expect(summary).toHaveAccessibleName('See more about dev-setup');
         await expect(second.locator('summary')).toHaveAccessibleName('See more about phission');
+        await page.evaluate(() => document.fonts.ready);
         const closedHeight = (await cards.nth(1).boundingBox())!.height;
         // Reach the actual summary with native keyboard navigation, not focus().
         for (let i = 0; i < 20 && !await summary.evaluate(el => el === document.activeElement); i++) {
@@ -29,7 +113,8 @@ for (const javaScriptEnabled of [true, false]) {
         await expect(first).toHaveAttribute('open');
         await expect(second).not.toHaveAttribute('open');
         await expect(summary).toBeFocused();
-        expect((await cards.nth(1).boundingBox())!.height).toBeCloseTo(closedHeight, 0);
+        // Opening a sibling must not stretch this card; it may return to a shorter natural height.
+        expect((await cards.nth(1).boundingBox())!.height).toBeLessThanOrEqual(closedHeight + 0.5);
         await expect(first.getByRole('heading', { name: 'Evidence', exact: true })).toBeVisible();
         await page.keyboard.press('Space');
         await expect(first).not.toHaveAttribute('open');
