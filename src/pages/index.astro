@@ -49,7 +49,10 @@ import { PROFILE, ABOUT_PARAGRAPHS, PROJECTS, CASE_STUDIES, SKILL_GROUPS, CONTAC
         <h2 id="about-heading">About</h2>
       </div>
       <div class="about-grid">
-        <div class="biography">{ABOUT_PARAGRAPHS.map(paragraph => <p>{paragraph}</p>)}</div>
+        <div class="biography">
+          {ABOUT_PARAGRAPHS.map(paragraph => <p>{paragraph}</p>)}
+          <p><a href="/about/">More about me</a></p>
+        </div>
         <div class="skills">
           <h3>Skills &amp; tools</h3>
           <dl>

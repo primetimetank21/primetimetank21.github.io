@@ -7,7 +7,7 @@ import {
   TerminalHistory,
   COMMANDS,
 } from '../../lib/terminal';
-import { PROJECTS, CASE_STUDIES } from '../../lib/content';
+import { PROJECTS, ABOUT_LINES } from '../../lib/content';
 
 // ─── normalizeInput ──────────────────────────────────────────────────────────
 
@@ -132,9 +132,9 @@ describe('executeCommand', () => {
     expect(text).toContain('clear');
   });
 
-  it('about command returns real content (not placeholder)', () => {
+  it('about command preserves the shared biography without links or navigation', () => {
     const r = executeCommand('about');
-    expect(r.type).toBe('output');
+    expect(r).toEqual({ type: 'output', lines: [...ABOUT_LINES] });
     const text = r.lines.join('\n');
     expect(text).not.toContain('[M2]');
     expect(text).toContain('Microsoft');
@@ -249,31 +249,38 @@ describe('executeCommand', () => {
   });
 });
 
-describe('open case studies', () => {
-  const links = CASE_STUDIES.map(project => ({ label: project.name, href: project.caseStudy.path }));
+describe('open pages', () => {
+  const links = [
+    { label: 'about', href: '/about/' },
+    { label: 'dev-setup', href: '/projects/dev-setup/' },
+    { label: 'phission', href: '/projects/phission/' },
+  ];
+  const usage = 'Usage: open [about | dev-setup | phission]';
 
   it.each(['open', '  OPEN \t '])('lists structured links without navigation for %j', raw => {
     const result = executeCommand(raw);
     expect(result).toMatchObject({ type: 'output', links });
     expect(result.openPath).toBeUndefined();
-    expect(result.lines.join('\n')).toContain('Usage: open [dev-setup | phission]');
-    expect(result.lines.join('\n')).toContain('new tab');
+    expect(result.lines).toEqual(['Pages (links open in a new tab):', usage]);
   });
 
-  for (const project of CASE_STUDIES) {
-    it.each([`open ${project.name}`, `  OpEn \t\n ${project.name.toUpperCase()}  `])('requests only the shared destination for %j', raw => {
+  for (const link of links) {
+    it.each([`open ${link.label}`, `  OpEn \t\n ${link.label.toUpperCase()}  `])('requests only the allowlisted destination for %j', raw => {
       const result = executeCommand(raw);
       expect(result).toEqual({
         type: 'output',
         lines: ['New tab requested. If it did not appear, use the link below:'],
-        links: [{ label: project.name, href: project.caseStudy.path }],
-        openPath: project.caseStudy.path,
+        links: [link],
+        openPath: link.href,
       });
     });
   }
 
   it.each([
     'missing', 'dev-setup extra', 'dev-setup phission', 'phission extra',
+    'about extra', 'about dev-setup', 'about\nphission', 'about/', '/about', '/about/',
+    '../about', 'about/nested', 'ABOUT?x=1', 'about#skills', '%61bout', '"about"',
+    'https://primetimetank21.github.io/about/', 'contact', 'apple-music-playlist-converter',
     '/projects/dev-setup/', 'projects/phission', '../phission', 'dev-setup/',
     'https://example.com', 'https://primetimetank21.github.io/projects/phission/',
     '//example.com', 'javascript:alert(1)', 'data:text/html,hello',
@@ -285,7 +292,7 @@ describe('open case studies', () => {
     expect(result.openPath).toBeUndefined();
     expect(result.links).toBeUndefined();
     expect(result.lines).toEqual([
-      'Usage: open [dev-setup | phission]', 'Type `help` to see available commands.',
+      usage, 'Type `help` to see available commands.',
     ]);
   });
 
@@ -293,7 +300,9 @@ describe('open case studies', () => {
     expect(COMMANDS).toContain('open');
     expect(getCompletion('O')).toBe('open');
     expect(getCompletion('open d')).toBe('');
-    expect(executeCommand('help').lines.join('\n')).toContain('open <name> requests a new tab');
+    expect(getCompletion('open a')).toBe('');
+    expect(executeCommand('help').lines.join('\n')).toContain('list pages; open <name> requests a new tab');
+    expect(executeCommand('help').lines.join('\n')).not.toContain('case studies');
   });
 });
 
