@@ -7,6 +7,7 @@ import {
   TerminalHistory,
   COMMANDS,
 } from '../../lib/terminal';
+import { PROJECTS } from '../../lib/content';
 
 // ─── normalizeInput ──────────────────────────────────────────────────────────
 
@@ -147,19 +148,18 @@ describe('executeCommand', () => {
     expect(text).toContain('github.com');
   });
 
-  it('projects command returns exactly 6 projects', () => {
+  it('projects command returns exactly 7 projects', () => {
     const r = executeCommand('projects');
     const urls = r.lines.filter(l => l.trim().startsWith('https://github.com/primetimetank21/'));
-    expect(urls).toHaveLength(6);
+    expect(urls).toHaveLength(7);
+    expect(urls.map(url => url.trim())).toEqual(PROJECTS.map(project => project.url));
   });
 
-  it('projects command includes all pinned repos', () => {
-    const text = executeCommand('projects').lines.join('\n');
-    expect(text).toContain('apple-music-playlist-converter');
-    expect(text).toContain('PIT-UN-hackathon2023');
-    expect(text).toContain('hackUMBC2022');
-    expect(text).toContain('instagram-scanner');
-    expect(text).not.toContain('farm-stack-todo');
+  it('projects command includes every shared project description and status in order', () => {
+    const lines = executeCommand('projects').lines.filter(line => line && !line.startsWith('  '));
+    expect(lines).toEqual(PROJECTS.map(project =>
+      `${project.name}  —  ${project.description}  [${project.status}]`,
+    ));
   });
 
   it('projects output includes status tags', () => {

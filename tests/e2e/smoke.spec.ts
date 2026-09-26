@@ -141,16 +141,27 @@ test.describe('static portfolio', () => {
         await expect(card).toContainText(project.description);
         await expect(card.locator(`a[href="${project.url}"]`)).toBeVisible();
         if (project.caseStudy) {
+          await expect(card.getByRole('heading', { level: 3 })).toHaveText(project.caseStudy.title);
+          await expect(card.getByRole('list', { name: 'Technologies', exact: true }).getByRole('listitem'))
+            .toHaveText([...project.caseStudy.technologies]);
+          await expect(card.getByRole('list', { name: 'Architecture flow', exact: true }).getByRole('listitem'))
+            .toHaveText([...project.caseStudy.flow]);
           for (const field of ['problem', 'approach', 'tradeoff', 'evidence'] as const) {
             await expect(card).toContainText(project.caseStudy[field]);
           }
           for (const link of project.caseStudy.links) {
             await expect(card.getByRole('link', { name: link.label })).toHaveAttribute('href', link.url);
           }
+        } else {
+          await expect(card.getByRole('heading', { level: 3 })).toHaveText(project.name);
+          await expect(card.locator('.case-study')).toHaveCount(0);
         }
       }
+      await expect(main.locator('#projects article')).toHaveCount(7);
       await expect(main.locator('.featured-projects article')).toHaveCount(2);
-      await expect(main.locator('#projects article').first()).not.toHaveAttribute('aria-label', 'primetimetank21.github.io');
+      await expect(main.locator('.featured-projects .repo-name')).toHaveText(['dev-setup', 'phission']);
+      await expect(main.locator('.other-projects article')).toHaveCount(5);
+      await expect(main.locator('.other-projects article').first()).toHaveAttribute('aria-label', 'apple-music-playlist-converter');
       for (const group of SKILL_GROUPS) {
         for (const skill of group.items) await expect(main.locator('.skills')).toContainText(skill);
       }
