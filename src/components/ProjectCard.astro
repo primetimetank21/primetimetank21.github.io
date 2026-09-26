@@ -1,5 +1,6 @@
 ---
 import type { Project } from '../lib/content';
+import CaseStudyBody from './CaseStudyBody.astro';
 interface Props { project: Project }
 const { project } = Astro.props;
 const study = project.caseStudy;
@@ -13,27 +14,20 @@ const study = project.caseStudy;
   {study && <h3>{study.title}</h3>}
   <p class="project-description">{project.description}</p>
   {study && (
-    <>
-      <ul class="technologies" aria-label="Technologies">
-        {study.technologies.map(technology => <li>{technology}</li>)}
-      </ul>
-      <ol class="flow" aria-label="Architecture flow">
-        {study.flow.map(step => <li>{step}</li>)}
-      </ol>
-      <dl class="case-study">
-        <div><dt>Problem</dt><dd>{study.problem}</dd></div>
-        <div><dt>Approach</dt><dd>{study.approach}</dd></div>
-        <div><dt>Engineering trade-off</dt><dd>{study.tradeoff}</dd></div>
-        <div><dt>Evidence</dt><dd>{study.evidence}</dd></div>
-      </dl>
-    </>
+    <ul class="technologies" aria-label="Technologies">
+      {study.technologies.map(technology => <li>{technology}</li>)}
+    </ul>
   )}
   <ul class="project-links" aria-label={`${project.name} links`}>
+    {study && <li><a href={study.path}>Read case study <span class="sr-only">for {project.name}</span></a></li>}
     <li><a href={project.url} target="_blank" rel="noopener noreferrer">Source <span class="sr-only">for {project.name}</span><span aria-hidden="true">↗</span></a></li>
-    {study?.links.map(link => (
-      <li><a href={link.url} target="_blank" rel="noopener noreferrer">{link.label} <span aria-hidden="true">↗</span></a></li>
-    ))}
   </ul>
+  {study && (
+    <details>
+      <summary>See more <span class="sr-only">about {project.name}</span></summary>
+      <CaseStudyBody study={study} headingLevel="h4" />
+    </details>
+  )}
 </article>
 
 <style>
@@ -51,17 +45,16 @@ const study = project.caseStudy;
   .project-heading { display: flex; align-items: baseline; flex-wrap: wrap; gap: var(--space-3); }
   h3 { font-size: var(--font-size-lg); overflow-wrap: anywhere; }
   .repo-name { color: var(--color-info); font-size: var(--font-size-sm); overflow-wrap: anywhere; }
-  .flow { list-style: none; display: flex; flex-wrap: wrap; gap: var(--space-2); padding-block: var(--space-3); border-block: 1px solid var(--color-border); color: var(--color-fg-subtle); font-size: var(--font-size-sm); }
-  .flow li:not(:last-child)::after { content: ' →'; color: var(--color-accent); }
   .status { font-size: var(--font-size-sm); color: var(--color-fg-subtle); }
   .status::before { content: '['; }
   .status::after { content: ']'; }
   .active { color: var(--color-success); }
-  p, dd { color: var(--color-fg-muted); line-height: var(--line-height-normal); }
+  p { color: var(--color-fg-muted); line-height: var(--line-height-normal); }
   .technologies, .project-links { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); list-style: none; }
   .technologies { font-size: var(--font-size-sm); color: var(--color-info); }
-  .case-study { display: grid; gap: var(--space-5); }
-  dt { color: var(--color-accent-alt); font-size: var(--font-size-sm); font-weight: 700; margin-bottom: var(--space-1); }
+  summary { min-height: 2.75rem; padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); color: var(--color-accent); font-size: var(--font-size-sm); cursor: pointer; }
+  summary:hover { border-color: var(--color-accent); }
+  details[open] summary { margin-bottom: var(--space-5); }
   .project-links { padding-top: var(--space-2); margin-top: auto; font-size: var(--font-size-sm); }
   @media (max-width: 600px) {
     .project-card { padding: var(--space-5); }

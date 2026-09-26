@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { PROJECTS } from '../../lib/content';
+import { PROJECTS, CASE_STUDIES } from '../../lib/content';
 
 describe('project content', () => {
   it('keeps all seven projects in presentation order', () => {
@@ -17,6 +17,17 @@ describe('project content', () => {
   it('features only DevSetup and Phission', () => {
     expect(PROJECTS.filter(project => project.caseStudy).map(project => project.name))
       .toEqual(['dev-setup', 'phission']);
+  });
+
+  it('shares exactly the two static destinations with the featured projects', () => {
+    expect(CASE_STUDIES).toEqual(PROJECTS.filter(project => project.caseStudy));
+    expect(CASE_STUDIES.map(project => project.caseStudy.path)).toEqual([
+      '/projects/dev-setup/', '/projects/phission/',
+    ]);
+    for (const project of CASE_STUDIES) {
+      expect(project.caseStudy.path).toBe(`/projects/${project.name}/`);
+    }
+    expect(PROJECTS.filter(project => !project.caseStudy)).toHaveLength(5);
   });
 
   it('retains the converter as a secondary project without a case study', () => {

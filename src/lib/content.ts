@@ -9,6 +9,7 @@ export interface Project {
   url: string;
   status: 'active' | 'completed';
   caseStudy?: {
+    path: `/projects/${string}/`;
     title: string;
     flow: readonly string[];
     technologies: readonly string[];
@@ -47,6 +48,7 @@ export const PROJECTS: readonly Project[] = [
     url: 'https://github.com/primetimetank21/dev-setup',
     status: 'active',
     caseStudy: {
+      path: '/projects/dev-setup/',
       title: 'Development environment automation',
       technologies: ['Bash', 'PowerShell', 'GitHub Actions'],
       flow: ['Entrypoint', 'Platform orchestrator', 'Ordered tool installers'],
@@ -67,6 +69,7 @@ export const PROJECTS: readonly Project[] = [
     url: 'https://github.com/primetimetank21/phission',
     status: 'completed',
     caseStudy: {
+      path: '/projects/phission/',
       title: 'From HCI prototype to a reproducible demo',
       technologies: ['Python', 'Reflex', 'Pytest', 'Playwright'],
       flow: ['Synthetic inbox', 'MIME + link parsing', 'Simulated result + guidance'],
@@ -113,6 +116,10 @@ export const PROJECTS: readonly Project[] = [
     status: 'active',
   },
 ];
+
+/** The same two studies drive featured cards, static routes, and terminal destinations. */
+export type CaseStudyProject = Project & { caseStudy: NonNullable<Project['caseStudy']> };
+export const CASE_STUDIES = PROJECTS.filter((project): project is CaseStudyProject => !!project.caseStudy);
 
 /** Render projects as terminal output lines. */
 export function formatProjects(): string[] {

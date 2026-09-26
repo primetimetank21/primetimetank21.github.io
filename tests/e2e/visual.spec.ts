@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { CASE_STUDIES } from '../../src/lib/content';
 
 /** Blocking visual gate. Refresh baselines only in the pinned official
  * Playwright container, review the PNGs, and follow README's approval/check flow.
@@ -21,6 +22,25 @@ for (const theme of ['dark', 'light']) {
         const name = theme === 'dark' && viewport.name === 'desktop' ? 'homepage.png' : `homepage-${theme}-${viewport.name}.png`;
         await expect(page).toHaveScreenshot(name, { fullPage: true, animations: 'disabled' });
       });
+
+      test(`portfolio expanded — ${viewport.name}`, async ({ page }) => {
+        await page.setViewportSize(viewport);
+        await page.goto('/');
+        await page.evaluate(() => document.fonts.ready);
+        for (const summary of await page.locator('.featured-projects summary').all()) await summary.click();
+        await expect(page.locator('.featured-projects details[open]')).toHaveCount(2);
+        await expect(page).toHaveScreenshot(`homepage-expanded-${theme}-${viewport.name}.png`, { fullPage: true, animations: 'disabled' });
+      });
+
+      for (const project of CASE_STUDIES) {
+        test(`${project.name} case study — ${viewport.name}`, async ({ page }) => {
+          await page.setViewportSize(viewport);
+          await page.goto(project.caseStudy.path);
+          await page.evaluate(() => document.fonts.ready);
+          await expect(page.locator('h1')).toHaveText(project.caseStudy.title);
+          await expect(page).toHaveScreenshot(`case-study-${project.name}-${theme}-${viewport.name}.png`, { fullPage: true, animations: 'disabled' });
+        });
+      }
 
       test(`terminal empty — ${viewport.name}`, async ({ page }) => {
         await page.setViewportSize(viewport);

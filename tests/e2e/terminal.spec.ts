@@ -1,6 +1,6 @@
 import { test, expect, type Page, type Locator } from '@playwright/test';
 import { textContrast } from './helpers/contrast';
-import { PROJECTS } from '../../src/lib/content';
+import { PROJECTS, CASE_STUDIES } from '../../src/lib/content';
 
 async function tabTo(page: Page, target: Locator, backwards = false) {
   for (let i = 0; i < 50; i++) {
@@ -265,10 +265,13 @@ test.describe('terminal interaction', () => {
 
   test('theme toggle persists across page reload', async ({ page }) => {
     const btn = page.locator('[data-testid="theme-toggle"]');
+    const html = page.locator('html');
+    await expect(html).toHaveAttribute('data-theme', 'dark');
     await btn.click();
-    const theme = await page.locator('html').getAttribute('data-theme');
+    // View transitions apply the theme asynchronously; observe it before reload.
+    await expect(html).toHaveAttribute('data-theme', 'light');
     await page.reload();
-    await expect(page.locator('html')).toHaveAttribute('data-theme', theme!);
+    await expect(html).toHaveAttribute('data-theme', 'light');
   });
 
   test('terminal `theme` command toggles the theme', async ({ page }) => {
@@ -482,7 +485,8 @@ for (const theme of ['dark', 'light']) {
     await page.addInitScript(theme => localStorage.setItem('theme', theme), theme);
     await page.goto('/');
     const input = page.locator('#terminal-input');
-    for (const command of ['about', 'projects', 'skills', 'contact', 'help']) {
+    for (const summary of await page.locator('.featured-projects summary').all()) await summary.click();
+    for (const command of ['about', 'projects', 'skills', 'contact', 'help', 'open']) {
       await input.fill(command);
       await input.press('Enter');
     }
@@ -490,6 +494,10 @@ for (const theme of ['dark', 'light']) {
     expect(samples.length).toBeGreaterThan(80);
     expect(samples.filter(sample => sample.ratio < 4.5)).toEqual([]);
     expect(samples.some(sample => sample.selector === 'input-ghost')).toBe(true);
+    for (const project of CASE_STUDIES) {
+      await page.goto(project.caseStudy.path);
+      expect((await page.evaluate(textContrast)).filter(sample => sample.ratio < 4.5)).toEqual([]);
+    }
     await page.goto('/unknown-contrast-route');
     expect((await page.evaluate(textContrast)).filter(sample => sample.ratio < 4.5)).toEqual([]);
   });

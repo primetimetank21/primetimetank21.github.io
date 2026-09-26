@@ -3,10 +3,10 @@
  * Importable by both the Astro island script and Vitest unit tests.
  */
 
-import { ABOUT_LINES, formatProjects, SKILLS_LINES, LINKS_LINES } from './content.ts';
+import { ABOUT_LINES, formatProjects, SKILLS_LINES, LINKS_LINES, CASE_STUDIES, type CaseStudyProject } from './content.ts';
 
 /** Sorted list of all known commands */
-export const COMMANDS = ['about', 'clear', 'contact', 'help', 'links', 'projects', 'skills', 'tech', 'theme'] as const;
+export const COMMANDS = ['about', 'clear', 'contact', 'help', 'links', 'open', 'projects', 'skills', 'tech', 'theme'] as const;
 export type CommandName = (typeof COMMANDS)[number];
 
 // ─── Input normalisation ─────────────────────────────────────────────────────
@@ -51,14 +51,48 @@ export function getCompletion(raw: string): string {
 
 export type OutputType = 'output' | 'clear' | 'theme';
 
+export interface CommandLink {
+  label: string;
+  href: CaseStudyProject['caseStudy']['path'];
+}
+
 export interface CommandResult {
   type: OutputType;
   lines: string[];
+  links?: readonly CommandLink[];
+  openPath?: CommandLink['href'];
 }
+
+const OPEN_DESTINATIONS = Object.fromEntries(CASE_STUDIES.map(project => [
+  project.name, { label: project.name, href: project.caseStudy.path },
+]));
+const OPEN_USAGE = `Usage: open [${Object.keys(OPEN_DESTINATIONS).join(' | ')}]`;
 
 /** Execute a command string and return a structured result */
 export function executeCommand(raw: string): CommandResult {
   const cmd = normalizeInput(raw);
+  const [name, ...args] = cmd.split(' ');
+
+  if (name === 'open') {
+    if (args.length === 0) {
+      return {
+        type: 'output',
+        lines: ['Case studies (links open in a new tab):', OPEN_USAGE],
+        links: Object.values(OPEN_DESTINATIONS),
+      };
+    }
+    // Never look up inherited properties or treat input as a URL/path.
+    if (args.length === 1 && Object.hasOwn(OPEN_DESTINATIONS, args[0])) {
+      const link = OPEN_DESTINATIONS[args[0]];
+      return {
+        type: 'output',
+        lines: ['New tab requested. If it did not appear, use the link below:'],
+        links: [link],
+        openPath: link.href,
+      };
+    }
+    return { type: 'output', lines: [OPEN_USAGE, 'Type `help` to see available commands.'] };
+  }
 
   switch (cmd) {
     case 'help':
@@ -69,6 +103,7 @@ export function executeCommand(raw: string): CommandResult {
           "  help      \u2014 show this message",
           "  about     \u2014 who I am",
           "  projects  \u2014 things I've built",
+          "  open      \u2014 list case studies; open <name> requests a new tab",
           "  skills    \u2014 tech stack  (alias: tech)",
           "  contact   \u2014 links & contact info  (alias: links)",
           "  theme     \u2014 toggle light / dark theme",

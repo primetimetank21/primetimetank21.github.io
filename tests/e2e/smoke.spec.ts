@@ -144,6 +144,14 @@ test.describe('static portfolio', () => {
           await expect(card.getByRole('heading', { level: 3 })).toHaveText(project.caseStudy.title);
           await expect(card.getByRole('list', { name: 'Technologies', exact: true }).getByRole('listitem'))
             .toHaveText([...project.caseStudy.technologies]);
+          const details = card.locator('details');
+          await expect(details).not.toHaveAttribute('open');
+          const readLink = card.getByRole('link', { name: `Read case study for ${project.name}` });
+          await expect(readLink).toBeVisible();
+          await expect(readLink).toHaveAttribute('href', project.caseStudy.path);
+          expect(await readLink.getAttribute('target')).toBeNull();
+          await card.locator('summary').click();
+          await expect(details).toHaveAttribute('open');
           await expect(card.getByRole('list', { name: 'Architecture flow', exact: true }).getByRole('listitem'))
             .toHaveText([...project.caseStudy.flow]);
           for (const field of ['problem', 'approach', 'tradeoff', 'evidence'] as const) {
@@ -151,6 +159,7 @@ test.describe('static portfolio', () => {
           }
           for (const link of project.caseStudy.links) {
             await expect(card.getByRole('link', { name: link.label })).toHaveAttribute('href', link.url);
+            await expect(card.getByRole('link', { name: link.label })).toBeVisible();
           }
         } else {
           await expect(card.getByRole('heading', { level: 3 })).toHaveText(project.name);

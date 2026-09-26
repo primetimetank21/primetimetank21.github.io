@@ -1,0 +1,61 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import Layout from '../../layouts/Layout.astro';
+import ThemeToggle from '../../components/ThemeToggle.astro';
+import CaseStudyBody from '../../components/CaseStudyBody.astro';
+import { CASE_STUDIES, PROFILE } from '../../lib/content';
+
+export const getStaticPaths = (() => CASE_STUDIES.map(project => ({
+  params: { slug: project.name },
+  props: { project },
+}))) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+const { project } = Astro.props;
+const study = project.caseStudy;
+---
+
+<Layout
+  title={`${project.name} — ${study.title} | ${PROFILE.name}`}
+  description={project.description}
+  canonicalURL={new URL(study.path, Astro.site).href}
+>
+  <div slot="nav-extra" class="nav-links">
+    <a href="/">Home</a>
+    <a href="/#projects">Projects</a>
+    <a href="/#contact">Contact</a>
+    <a href="/#terminal">Terminal</a>
+  </div>
+  <ThemeToggle slot="header-actions" />
+
+  <article class="case-study-page" aria-labelledby="study-title">
+    <a class="back-link" href="/#projects">← Back to projects</a>
+    <header class="study-heading">
+      <p class="repo-name">{project.name} <span class:list={['status', { active: project.status === 'active' }]}>[{project.status}]</span></p>
+      <h1 id="study-title">{study.title}</h1>
+      <p class="description">{project.description}</p>
+      <ul class="technologies" aria-label="Technologies">
+        {study.technologies.map(technology => <li>{technology}</li>)}
+      </ul>
+      <a class="source-link" href={project.url} target="_blank" rel="noopener noreferrer">Source <span class="sr-only">for {project.name}</span><span aria-hidden="true">↗</span></a>
+    </header>
+    <CaseStudyBody study={study} headingLevel="h2" />
+    <a class="back-link" href="/#projects">← Back to projects</a>
+  </article>
+</Layout>
+
+<style>
+  .nav-links { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); font-size: var(--font-size-sm); }
+  .nav-links a { padding-block: var(--space-2); }
+  .case-study-page { width: 100%; max-width: 76ch; }
+  .back-link { display: inline-block; margin-block: var(--space-4) var(--space-8); font-size: var(--font-size-sm); }
+  .case-study-page > .back-link:last-child { margin-block: var(--space-8) 0; }
+  .study-heading { margin-bottom: var(--space-8); }
+  .repo-name { display: flex; flex-wrap: wrap; gap: var(--space-3); color: var(--color-info); font-size: var(--font-size-sm); margin-bottom: var(--space-4); }
+  .status { color: var(--color-fg-subtle); }
+  .active { color: var(--color-success); }
+  h1 { font-size: clamp(1.75rem, 4vw, 2.5rem); line-height: var(--line-height-tight); letter-spacing: -0.03em; }
+  .description { margin-block: var(--space-5); color: var(--color-fg-muted); line-height: var(--line-height-normal); }
+  .technologies { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); list-style: none; color: var(--color-info); font-size: var(--font-size-sm); }
+  .source-link { display: inline-block; margin-top: var(--space-5); font-size: var(--font-size-sm); }
+</style>

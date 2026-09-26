@@ -7,7 +7,7 @@ import {
   TerminalHistory,
   COMMANDS,
 } from '../../lib/terminal';
-import { PROJECTS } from '../../lib/content';
+import { PROJECTS, CASE_STUDIES } from '../../lib/content';
 
 // ─── normalizeInput ──────────────────────────────────────────────────────────
 
@@ -125,6 +125,7 @@ describe('executeCommand', () => {
     const text = executeCommand('help').lines.join('\n');
     expect(text).toContain('about');
     expect(text).toContain('projects');
+    expect(text).toContain('open');
     expect(text).toContain('skills');
     expect(text).toContain('contact');
     expect(text).toContain('theme');
@@ -245,6 +246,54 @@ describe('executeCommand', () => {
     const r = executeCommand('a'.repeat(500));
     expect(r.type).toBe('output');
     expect(r.lines[0].length).toBeLessThan(200);
+  });
+});
+
+describe('open case studies', () => {
+  const links = CASE_STUDIES.map(project => ({ label: project.name, href: project.caseStudy.path }));
+
+  it.each(['open', '  OPEN \t '])('lists structured links without navigation for %j', raw => {
+    const result = executeCommand(raw);
+    expect(result).toMatchObject({ type: 'output', links });
+    expect(result.openPath).toBeUndefined();
+    expect(result.lines.join('\n')).toContain('Usage: open [dev-setup | phission]');
+    expect(result.lines.join('\n')).toContain('new tab');
+  });
+
+  for (const project of CASE_STUDIES) {
+    it.each([`open ${project.name}`, `  OpEn \t\n ${project.name.toUpperCase()}  `])('requests only the shared destination for %j', raw => {
+      const result = executeCommand(raw);
+      expect(result).toEqual({
+        type: 'output',
+        lines: ['New tab requested. If it did not appear, use the link below:'],
+        links: [{ label: project.name, href: project.caseStudy.path }],
+        openPath: project.caseStudy.path,
+      });
+    });
+  }
+
+  it.each([
+    'missing', 'dev-setup extra', 'dev-setup phission', 'phission extra',
+    '/projects/dev-setup/', 'projects/phission', '../phission', 'dev-setup/',
+    'https://example.com', 'https://primetimetank21.github.io/projects/phission/',
+    '//example.com', 'javascript:alert(1)', 'data:text/html,hello',
+    'constructor', '__proto__', 'toString', 'hasOwnProperty', 'valueOf',
+    '<img src=x onerror=alert(1)>', '"phission"', 'phission?x=1', 'phission#evidence',
+  ])('rejects %j without any link or navigation request', argument => {
+    const result = executeCommand(`open ${argument}`);
+    expect(result.type).toBe('output');
+    expect(result.openPath).toBeUndefined();
+    expect(result.links).toBeUndefined();
+    expect(result.lines).toEqual([
+      'Usage: open [dev-setup | phission]', 'Type `help` to see available commands.',
+    ]);
+  });
+
+  it('completes the command name only and documents new-tab intent', () => {
+    expect(COMMANDS).toContain('open');
+    expect(getCompletion('O')).toBe('open');
+    expect(getCompletion('open d')).toBe('');
+    expect(executeCommand('help').lines.join('\n')).toContain('open <name> requests a new tab');
   });
 });
 
