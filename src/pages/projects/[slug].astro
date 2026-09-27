@@ -2,6 +2,7 @@
 import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
 import Layout from '../../layouts/Layout.astro';
 import ThemeToggle from '../../components/ThemeToggle.astro';
+import SiteNavLinks from '../../components/SiteNavLinks.astro';
 import CaseStudyBody from '../../components/CaseStudyBody.astro';
 import { CASE_STUDIES, PROFILE } from '../../lib/content';
 
@@ -20,12 +21,7 @@ const study = project.caseStudy;
   description={project.description}
   canonicalURL={new URL(study.path, Astro.site).href}
 >
-  <div slot="nav-extra" class="nav-links">
-    <a href="/">Home</a>
-    <a href="/#projects">Projects</a>
-    <a href="/#contact">Contact</a>
-    <a href="/#terminal">Terminal</a>
-  </div>
+  <SiteNavLinks slot="nav-extra" />
   <ThemeToggle slot="header-actions" />
 
   <article class="case-study-page" aria-labelledby="study-title">
@@ -45,8 +41,6 @@ const study = project.caseStudy;
 </Layout>
 
 <style>
-  .nav-links { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); font-size: var(--font-size-sm); }
-  .nav-links a { padding-block: var(--space-2); }
   .case-study-page { width: 100%; max-width: 76ch; }
   .back-link { display: inline-block; margin-block: var(--space-4) var(--space-8); font-size: var(--font-size-sm); }
   .case-study-page > .back-link:last-child { margin-block: var(--space-8) 0; }

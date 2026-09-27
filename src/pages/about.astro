@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import ThemeToggle from '../components/ThemeToggle.astro';
+import SiteNavLinks from '../components/SiteNavLinks.astro';
 import { PROFILE, ABOUT_PARAGRAPHS, SKILL_GROUPS, CASE_STUDIES, CONTACT } from '../lib/content';
 ---
 
@@ -9,13 +10,7 @@ import { PROFILE, ABOUT_PARAGRAPHS, SKILL_GROUPS, CASE_STUDIES, CONTACT } from '
   description={`${PROFILE.role}. ${PROFILE.summary}`}
   canonicalURL={new URL('/about/', Astro.site).href}
 >
-  <div slot="nav-extra" class="nav-links">
-    <a href="/">Home</a>
-    <a href="/about/" aria-current="page">About</a>
-    <a href="/#projects">Projects</a>
-    <a href="/#contact">Contact</a>
-    <a href="/#terminal">Terminal</a>
-  </div>
+  <SiteNavLinks slot="nav-extra" />
   <ThemeToggle slot="header-actions" />
 
   <article class="about-page" aria-labelledby="about-title">
@@ -56,9 +51,6 @@ import { PROFILE, ABOUT_PARAGRAPHS, SKILL_GROUPS, CASE_STUDIES, CONTACT } from '
 </Layout>
 
 <style>
-  .nav-links { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); font-size: var(--font-size-sm); }
-  .nav-links a { padding-block: var(--space-2); }
-  .nav-links [aria-current='page'] { color: var(--color-fg); font-weight: 700; }
   .about-page { width: 100%; max-width: 76ch; }
   .about-heading { margin-block: var(--space-4) var(--space-8); }
   .eyebrow { color: var(--color-success); font-size: var(--font-size-sm); margin-bottom: var(--space-4); }

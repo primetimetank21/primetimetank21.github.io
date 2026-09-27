@@ -1,0 +1,21 @@
+---
+const links = [
+  { label: 'Home', href: '/' },
+  { label: 'About', href: '/about/' },
+  { label: 'Projects', href: '/#projects' },
+  { label: 'Contact', href: '/#contact' },
+  { label: 'Terminal', href: '/#terminal' },
+];
+---
+
+<div class="nav-links">
+  {links.map(link => (
+    <a href={link.href} aria-current={Astro.url.pathname === link.href ? 'page' : undefined}>{link.label}</a>
+  ))}
+</div>
+
+<style>
+  .nav-links { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); font-size: var(--font-size-sm); }
+  .nav-links a { padding-block: var(--space-2); }
+  .nav-links [aria-current='page'] { color: var(--color-fg); font-weight: 700; }
+</style>
