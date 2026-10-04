@@ -4,7 +4,7 @@ import ThemeToggle from '../components/ThemeToggle.astro';
 import SiteNavLinks from '../components/SiteNavLinks.astro';
 import TerminalShell from '../components/Terminal/TerminalShell.astro';
 import ProjectCard from '../components/ProjectCard.astro';
-import { PROFILE, ABOUT_PARAGRAPHS, PROJECTS, CASE_STUDIES, SKILL_GROUPS, CONTACT } from '../lib/content';
+import { PROFILE, ABOUT_PARAGRAPHS, PROJECTS, CASE_STUDIES, SKILL_GROUPS, CONTACT, RESUME } from '../lib/content';
 ---
 
 <Layout>
@@ -19,6 +19,7 @@ import { PROFILE, ABOUT_PARAGRAPHS, PROJECTS, CASE_STUDIES, SKILL_GROUPS, CONTAC
       <p class="summary">{PROFILE.summary}</p>
       <div class="hero-actions">
         <a class="primary-link" href="#projects">Explore projects <span aria-hidden="true">↓</span></a>
+        <a href={RESUME.url} download={RESUME.filename} type="application/pdf">Download résumé (PDF)</a>
         <a href={CONTACT.links[1].url} target="_blank" rel="noopener noreferrer">Connect on LinkedIn <span aria-hidden="true">↗</span></a>
       </div>
       <p class="terminal-invite">Prefer a command line? <a href="#terminal">Open the terminal <span aria-hidden="true">❯_</span></a></p>

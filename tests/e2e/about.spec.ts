@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { PROFILE, ABOUT_PARAGRAPHS, SKILL_GROUPS, CASE_STUDIES, CONTACT } from '../../src/lib/content';
+import { PROFILE, ABOUT_PARAGRAPHS, SKILL_GROUPS, CASE_STUDIES, CONTACT, RESUME } from '../../src/lib/content';
 import { textContrast } from './helpers/contrast';
 
 test.describe('static About page', () => {
@@ -37,7 +37,14 @@ test.describe('static About page', () => {
       await expect(main.locator('.skills dt')).toHaveText(SKILL_GROUPS.map(group => group.label));
       await expect(main.locator('.skills dd')).toHaveText(SKILL_GROUPS.map(group => group.items.join(' · ')));
       await expect(main.getByText(CONTACT.summary, { exact: true })).toBeVisible();
-      await expect(main.locator('a')).toHaveCount(CASE_STUDIES.length + CONTACT.links.length);
+      await expect(main.locator('a')).toHaveCount(CASE_STUDIES.length + CONTACT.links.length + 1);
+      await expect(main.locator('.contact-links a')).toHaveText([
+        ...CONTACT.links.map(link => link.label), 'Download résumé (PDF)',
+      ]);
+      const resume = main.getByRole('link', { name: 'Download résumé (PDF)', exact: true });
+      await expect(resume).toHaveAttribute('href', RESUME.url);
+      await expect(resume).toHaveAttribute('download', RESUME.filename);
+      await expect(resume).toHaveAttribute('type', 'application/pdf');
       for (const contact of CONTACT.links) {
         const link = main.getByRole('link', { name: contact.label, exact: true });
         await expect(link).toHaveAttribute('href', contact.url);

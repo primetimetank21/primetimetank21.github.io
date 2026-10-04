@@ -11,7 +11,13 @@
 - **More about me** in the existing homepage About section opens `/about/` in the same tab. The static About page shares identity, biography, skills/tools, and public contact data from `src/lib/content.ts`, links to the two existing studies, and supports no-JS navigation. The homepage's `#about` section and direct fragment links remain intact. All content pages use the shared **Home → About → Projects → Contact → Terminal** bar in `SiteNavLinks.astro`; About navigates to `/about/`, while Projects/Contact/Terminal use homepage fragments. Home and About identify their exact current page with `aria-current="page"`.
 - The seven projects and two studies remain the full public selection. This is **partial issue #9**: no additional studies or 404 redesign. Unknown and nested routes (including `/about/nested/`) remain real 404s. Phission remains a synthetic-only demo with the existing evidence and limitations; no live detection or historical usability claims are added.
 - The terminal retains commands, history, completion, and theme switching, with normal keyboard navigation, focusable scrollback, and native mobile text editing.
-- A résumé download is intentionally not shown until an actual public résumé asset is supplied.
+- **Download résumé (PDF)** in the homepage hero and About contact list uses a same-origin, native download link that works without JavaScript. Explore projects remains the primary action; navigation and terminal commands are unchanged.
+
+## Public résumé
+
+The approved PDF is served unchanged from [`public/resume/earl_tankard_jr-swe_resume-2026-10-04.pdf`](public/resume/earl_tankard_jr-swe_resume-2026-10-04.pdf) at `/resume/earl_tankard_jr-swe_resume-2026-10-04.pdf`. It is public, including the contact details in the document. The shared `RESUME` export in `src/lib/content.ts` supplies the URL and suggested download filename, separately from `CONTACT` and terminal output. Browser settings ultimately control download handling.
+
+To update it, obtain approval for the exact replacement PDF and its public contents, copy only that PDF into `public/resume/` under a new dated filename, and update `RESUME.url` and `RESUME.filename`. Update the accepted byte count/hash in `src/__tests__/unit/content.test.ts` and `tests/e2e/smoke.spec.ts`, plus this documented path. Do not publish companion sources or private notes. Run type-check, unit tests, build, and E2E; review the affected visual baselines in the pinned Playwright container before merging. Publishing a new filename does not remove older public copies; review any retirement separately. Merge and deployment remain separate approval gates.
 
 ## Terminal commands and page routes
 
@@ -188,6 +194,7 @@ git commit -m "test(visual): update Linux baselines"
 │       ├── deploy.yml                 ← Pages deploy on push to main
 │       └── update-visual-baselines.yml ← Manual: regenerate Linux snapshots
 ├── public/
+│   ├── resume/                        ← Approved, dated public PDF only
 │   ├── favicon.svg                    ← Terminal prompt glyph (❯), Tokyo Night
 │   ├── favicon.ico                    ← Fallback .ico (32×32)
 │   ├── apple-touch-icon.svg           ← Apple touch icon (SVG; PNG regen needed for full iOS)

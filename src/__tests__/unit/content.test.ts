@@ -1,5 +1,42 @@
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { describe, it, expect } from 'vitest';
-import { PROJECTS, CASE_STUDIES } from '../../lib/content';
+import { PROJECTS, CASE_STUDIES, CONTACT, LINKS_LINES, RESUME } from '../../lib/content';
+
+describe('public résumé', () => {
+  it('shares the accepted same-origin asset URL and dated download filename', () => {
+    expect(RESUME).toEqual({
+      url: '/resume/earl_tankard_jr-swe_resume-2026-10-04.pdf',
+      filename: 'earl_tankard_jr-swe_resume-2026-10-04.pdf',
+    });
+    expect(RESUME.url).toBe(`/resume/${RESUME.filename}`);
+  });
+
+  it('ships the accepted PDF unchanged', () => {
+    const pdf = readFileSync(new URL(`../../../public${RESUME.url}`, import.meta.url));
+    expect(pdf.subarray(0, 5).toString()).toBe('%PDF-');
+    expect(pdf.length).toBe(73992);
+    expect(createHash('sha256').update(pdf).digest('hex'))
+      .toBe('e83599523c5a8bd34fa2b6c2f26f6f1b6680b7271419d51f2ce7dc6c403cc4b9');
+  });
+
+  it('keeps contact data and terminal links unchanged', () => {
+    expect(CONTACT).toEqual({
+      summary: 'Find my public work on GitHub, or connect with me on LinkedIn.',
+      links: [
+        { label: 'GitHub', url: 'https://github.com/primetimetank21' },
+        { label: 'LinkedIn', url: 'https://www.linkedin.com/in/earl-tankard-jr/' },
+      ],
+    });
+    expect(LINKS_LINES).toEqual([
+      'Links:',
+      '',
+      '  GitHub    https://github.com/primetimetank21',
+      '  LinkedIn  https://www.linkedin.com/in/earl-tankard-jr/',
+      '  Portfolio https://primetimetank21.github.io',
+    ]);
+  });
+});
 
 describe('project content', () => {
   it('keeps all seven projects in presentation order', () => {

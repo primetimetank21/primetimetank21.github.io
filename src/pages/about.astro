@@ -2,7 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import ThemeToggle from '../components/ThemeToggle.astro';
 import SiteNavLinks from '../components/SiteNavLinks.astro';
-import { PROFILE, ABOUT_PARAGRAPHS, SKILL_GROUPS, CASE_STUDIES, CONTACT } from '../lib/content';
+import { PROFILE, ABOUT_PARAGRAPHS, SKILL_GROUPS, CASE_STUDIES, CONTACT, RESUME } from '../lib/content';
 ---
 
 <Layout
@@ -45,6 +45,7 @@ import { PROFILE, ABOUT_PARAGRAPHS, SKILL_GROUPS, CASE_STUDIES, CONTACT } from '
       <p>{CONTACT.summary}</p>
       <ul class="contact-links">
         {CONTACT.links.map(link => <li><a href={link.url}>{link.label}</a></li>)}
+        <li><a href={RESUME.url} download={RESUME.filename} type="application/pdf">Download résumé (PDF)</a></li>
       </ul>
     </section>
   </article>
