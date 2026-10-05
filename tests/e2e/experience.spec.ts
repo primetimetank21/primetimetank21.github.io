@@ -172,6 +172,51 @@ for (const width of [320, 390, 844, 1362]) {
   }
 }
 
+for (const javaScriptEnabled of [true, false]) {
+  for (const reducedMotion of ['no-preference', 'reduce'] as const) {
+    test.describe(`Experience back-to-top motion, JS ${javaScriptEnabled}, ${reducedMotion}`, () => {
+      test.use({ javaScriptEnabled, contextOptions: { reducedMotion } });
+      for (const width of [1280, 390]) {
+        test(`native scrolling preserves preference and focus at ${width}px`, async ({ page }) => {
+          await page.setViewportSize({ width, height: 844 });
+          await page.goto('/experience/');
+          await page.evaluate(() => document.fonts.ready);
+          expect(await page.locator('html').evaluate(el => getComputedStyle(el).scrollBehavior))
+            .toBe(reducedMotion === 'reduce' ? 'auto' : 'smooth');
+          const main = page.locator('main');
+          const targetTop = await main.evaluate(el => el.getBoundingClientRect().top + window.scrollY);
+          const back = main.getByRole('link', { name: 'Back to top', exact: true });
+          await expect(back).toHaveAttribute('href', '#main-content');
+          await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
+          await expect(back).toBeInViewport();
+          const start = await page.evaluate(() => window.scrollY);
+          expect(start).toBeGreaterThan(targetTop + 500);
+          if (javaScriptEnabled) await back.click();
+          else { await back.focus(); await page.keyboard.press('Enter'); }
+          await expect(page).toHaveURL('/experience/#main-content');
+          await expect(main).toBeFocused();
+          // Sample from the test process: page rAF/event callbacks do not run
+          // with JavaScript disabled, but native CSS scrolling still does.
+          const positions: number[] = [];
+          await expect.poll(async () => {
+            const y = await page.evaluate(() => window.scrollY);
+            positions.push(y);
+            return y;
+          }, { intervals: [16] }).toBeLessThanOrEqual(Math.ceil(targetTop));
+          const intermediate = positions.filter(y => y < start - 1 && y > targetTop + 1);
+          if (reducedMotion === 'reduce') expect(intermediate).toEqual([]);
+          else expect(intermediate.length).toBeGreaterThan(2);
+          await expect(main.locator('h1')).toBeInViewport();
+          await page.keyboard.press('Tab');
+          await expect(main.getByRole('link', { name: 'Download résumé (PDF)', exact: true })).toBeFocused();
+          await page.goto('/about/');
+          expect(await page.locator('html').evaluate(el => getComputedStyle(el).scrollBehavior)).toBe('auto');
+        });
+      }
+    });
+  }
+}
+
 test('Experience metadata and production assets have no prototype wrapper', async ({ page, request }) => {
   const response = await page.goto('/experience/');
   expect(response?.status()).toBe(200);

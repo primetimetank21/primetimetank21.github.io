@@ -67,6 +67,10 @@ import { PROFILE, EXPERIENCE, RESUME } from '../lib/content';
 </Layout>
 
 <style>
+  /* Native fragment scrolling, limited to this page and motion preference. */
+  @media (prefers-reduced-motion: no-preference) {
+    :global(html:has(.experience-page)) { scroll-behavior: smooth; }
+  }
   .experience-page { width: 100%; max-width: 1080px; font-size: var(--font-size-base); }
   .page-heading { padding: var(--space-4) 0 var(--space-10); max-width: 850px; }
   .eyebrow { color: var(--color-success); font-size: var(--font-size-sm); margin-bottom: var(--space-3); }
