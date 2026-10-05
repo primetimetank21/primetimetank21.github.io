@@ -148,6 +148,13 @@ export const SKILLS_LINES: readonly string[] = [
   ...SKILL_GROUPS.map(group => `  ${group.label.padEnd(12)}${group.items.join(' · ')}`),
 ];
 
+// ─── Résumé ──────────────────────────────────────────────────────────────────
+
+export const RESUME = {
+  url: '/resume/earl_tankard_jr-swe_resume-2026-10-04.pdf',
+  filename: 'earl_tankard_jr-swe_resume-2026-10-04.pdf',
+} as const;
+
 // ─── Links ───────────────────────────────────────────────────────────────────
 
 export const CONTACT = {

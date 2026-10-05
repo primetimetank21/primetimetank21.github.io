@@ -1,5 +1,8 @@
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
-import { ABOUT_PARAGRAPHS, PROJECTS, SKILL_GROUPS, CONTACT, PROFILE } from '../../src/lib/content';
+import { ABOUT_PARAGRAPHS, PROJECTS, SKILL_GROUPS, CONTACT, PROFILE, RESUME } from '../../src/lib/content';
+import { textContrast } from './helpers/contrast';
 
 /**
  * Smoke E2E tests — always run (no visual regression here).
@@ -20,6 +23,111 @@ test.describe('homepage', () => {
     await expect(page.locator('.summary')).toBeInViewport();
   });
 });
+
+// ── Native résumé download ───────────────────────────────────────────────────
+
+const resumeLabel = 'Download résumé (PDF)';
+const resumeSHA256 = 'e83599523c5a8bd34fa2b6c2f26f6f1b6680b7271419d51f2ce7dc6c403cc4b9';
+const acceptedResume = readFileSync(new URL(`../../public${RESUME.url}`, import.meta.url));
+
+test('public résumé URL serves the exact accepted PDF with its media type', async ({ request, baseURL }) => {
+  const response = await request.get(RESUME.url);
+  expect(response.status()).toBe(200);
+  expect(response.url()).toBe(new URL(RESUME.url, baseURL).href);
+  expect(response.headers()['content-type']).toMatch(/^application\/pdf(?:;|$)/);
+  const bytes = await response.body();
+  expect(bytes.length).toBe(73992);
+  expect(createHash('sha256').update(bytes).digest('hex')).toBe(resumeSHA256);
+  expect(bytes.equals(acceptedResume)).toBe(true);
+});
+
+for (const route of ['/', '/about/']) {
+  // Without JavaScript the existing site uses its default dark theme.
+  for (const mode of [
+    { javaScriptEnabled: true, colorScheme: 'dark' },
+    { javaScriptEnabled: true, colorScheme: 'light' },
+    { javaScriptEnabled: false, colorScheme: 'dark' },
+  ] as const) {
+    test.describe(`résumé on ${route}, JS ${mode.javaScriptEnabled}, ${mode.colorScheme}`, () => {
+      test.use({ ...mode, contextOptions: { reducedMotion: 'reduce' } });
+
+      for (const width of [1280, 960, 390, 320]) {
+        test(`native keyboard and pointer downloads, contrast and layout at ${width}px`, async ({ page, context }) => {
+          await page.setViewportSize({ width, height: 844 });
+          await page.goto(route);
+          await page.evaluate(() => document.fonts.ready);
+          if (mode.javaScriptEnabled) await expect(page.locator('html')).toHaveAttribute('data-theme', mode.colorScheme);
+          const group = page.locator(route === '/' ? '.hero-actions' : '.about-page .contact-links');
+          const link = group.getByRole('link', { name: resumeLabel, exact: true });
+          await expect(page.locator('a[download]')).toHaveCount(1);
+          await expect(link).toBeVisible();
+          await expect(link).toHaveAttribute('href', RESUME.url);
+          await expect(link).toHaveAttribute('download', RESUME.filename);
+          await expect(link).toHaveAttribute('type', 'application/pdf');
+          for (const attribute of ['target', 'role', 'tabindex', 'onclick', 'onkeydown']) {
+            expect(await link.getAttribute(attribute)).toBeNull();
+          }
+          if (route === '/') {
+            await expect(group.getByRole('link')).toHaveText([
+              'Explore projects ↓', resumeLabel, 'Connect on LinkedIn ↗',
+            ]);
+            await expect(group.locator('.primary-link')).toHaveAttribute('href', '#projects');
+            await expect(group.getByRole('link', { name: 'Connect on LinkedIn' })).toHaveAttribute('href', CONTACT.links[1].url);
+          } else {
+            await expect(group.getByRole('link')).toHaveText([...CONTACT.links.map(contact => contact.label), resumeLabel]);
+          }
+          expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+          expect(await group.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+          for (const action of await group.getByRole('link').all()) {
+            const box = (await action.boundingBox())!;
+            expect(box.x).toBeGreaterThanOrEqual(0);
+            expect(box.x + box.width).toBeLessThanOrEqual(width);
+          }
+          const samples = (await page.evaluate(textContrast)).filter(sample => sample.text === resumeLabel);
+          expect(samples).toHaveLength(1);
+          expect(samples[0].ratio).toBeGreaterThanOrEqual(4.5);
+
+          for (const activation of ['keyboard', 'pointer']) {
+            if (activation === 'keyboard') {
+              // Reach the link with real Tab navigation rather than focus().
+              for (let i = 0; i < 20 && !await link.evaluate(el => el === document.activeElement); i++) {
+                await page.keyboard.press('Tab');
+              }
+              await expect(link).toBeFocused();
+              await expect(link).toBeInViewport();
+              expect(await link.evaluate(el => el.matches(':focus-visible'))).toBe(true);
+              expect(parseFloat(await link.evaluate(el => getComputedStyle(el).outlineWidth))).toBeGreaterThanOrEqual(2);
+            } else {
+              await link.hover();
+            }
+            const activeSamples = (await page.evaluate(textContrast)).filter(sample => sample.text === resumeLabel);
+            expect(activeSamples).toHaveLength(1);
+            expect(activeSamples[0].ratio).toBeGreaterThanOrEqual(4.5);
+            const downloadPromise = page.waitForEvent('download');
+            if (activation === 'keyboard') await page.keyboard.press('Enter');
+            else await link.click();
+            const download = await downloadPromise;
+            expect(download.url()).toBe(new URL(RESUME.url, page.url()).href);
+            expect(download.suggestedFilename()).toBe(RESUME.filename);
+            expect(await download.failure()).toBeNull();
+            const bytes = readFileSync((await download.path())!);
+            expect(bytes.length).toBe(73992);
+            expect(createHash('sha256').update(bytes).digest('hex')).toBe(resumeSHA256);
+            expect(bytes.equals(acceptedResume)).toBe(true);
+            await expect(page).toHaveURL(route);
+            expect(context.pages()).toHaveLength(1);
+            await expect(link).toBeFocused();
+          }
+          if (route === '/') {
+            await page.keyboard.press('Tab');
+            await expect(group.getByRole('link', { name: 'Connect on LinkedIn' })).toBeFocused();
+          }
+          expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+        });
+      }
+    });
+  }
+}
 
 // ── Meta tags ─────────────────────────────────────────────────────────────────
 
