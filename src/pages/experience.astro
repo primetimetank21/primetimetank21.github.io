@@ -1,0 +1,116 @@
+---
+import Layout from '../layouts/Layout.astro';
+import ThemeToggle from '../components/ThemeToggle.astro';
+import SiteNavLinks from '../components/SiteNavLinks.astro';
+import { PROFILE, EXPERIENCE, RESUME } from '../lib/content';
+---
+
+<Layout
+  title={`Experience | ${PROFILE.name}`}
+  description={EXPERIENCE.intro}
+  canonicalURL={new URL('/experience/', Astro.site).href}
+>
+  <SiteNavLinks slot="nav-extra" />
+  <ThemeToggle slot="header-actions" />
+
+  <article class="experience-page" aria-labelledby="experience-title">
+    <header class="page-heading">
+      <p class="eyebrow"><span aria-hidden="true">❯</span> experience / selected work</p>
+      <h1 id="experience-title">Experience</h1>
+      <p class="intro">{EXPERIENCE.intro}</p>
+      <div class="page-actions">
+        <a href={RESUME.url} download={RESUME.filename} type="application/pdf">Download résumé (PDF)</a>
+        <span class="document-meta">The one-page version · updated {RESUME.updated}</span>
+      </div>
+    </header>
+
+    {EXPERIENCE.engagements.map(engagement => (
+      <section class="engagement" aria-labelledby={engagement.id}>
+        <header class="engagement-meta">
+          <h2 id={engagement.id}>{engagement.employer}</h2>
+          <p class="role">{engagement.role}</p>
+          <p class="period">{engagement.period}</p>
+          {engagement.current && <span class="current">Current role</span>}
+        </header>
+        <div class="contributions">
+          {engagement.contributions.map(contribution => (
+            <div class="contribution">
+              <h3>{contribution.title}</h3>
+              {'period' in contribution && <p class="contribution-period">{contribution.period}</p>}
+              <p class="contribution-description">{contribution.description}</p>
+              {'technologies' in contribution && (
+                <p class="technologies">
+                  <span class="sr-only">{contribution.technologies.length === 1 ? 'Technology used: ' : 'Technologies used: '}</span>
+                  {contribution.technologies.join(' · ')}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
+    ))}
+
+    <section class="public-work" aria-labelledby="public-work-heading">
+      <h2 id="public-work-heading">{EXPERIENCE.publicWork.heading}</h2>
+      <p>{EXPERIENCE.publicWork.intro}</p>
+      <ul class="study-links">
+        {EXPERIENCE.publicWork.links.map(link => (
+          <li><a href={link.url}>{link.label}</a><span>{link.description}</span></li>
+        ))}
+      </ul>
+    </section>
+    <div class="closing">
+      <a href="/about/">More about how I work</a>
+      <a href="#main-content">Back to top <span aria-hidden="true">↑</span></a>
+    </div>
+  </article>
+</Layout>
+
+<style>
+  /* Native fragment scrolling, limited to this page and motion preference. */
+  @media (prefers-reduced-motion: no-preference) {
+    :global(html:has(.experience-page)) { scroll-behavior: smooth; }
+  }
+  .experience-page { width: 100%; max-width: 1080px; font-size: var(--font-size-base); }
+  .page-heading { padding: var(--space-4) 0 var(--space-10); max-width: 850px; }
+  .eyebrow { color: var(--color-success); font-size: var(--font-size-sm); margin-bottom: var(--space-3); }
+  h1 { font-size: clamp(2rem, 5vw, 3rem); line-height: 1.2; letter-spacing: -0.04em; }
+  .intro { font-size: var(--font-size-lg); color: var(--color-fg-muted); max-width: 65ch; line-height: 1.65; margin-top: var(--space-5); }
+  .page-actions { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3) var(--space-6); margin-top: var(--space-6); }
+  .page-actions a { font-size: 14px; }
+  .document-meta { font-size: 12px; color: var(--color-fg-subtle); }
+  .engagement { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: var(--space-10); padding: 36px 0; border-top: 1px solid var(--color-border); scroll-margin-top: var(--space-6); }
+  .engagement-meta h2 { font-size: 21px; line-height: 1.3; letter-spacing: -0.02em; }
+  .role { color: var(--color-accent); margin-top: var(--space-2); font-size: 14px; line-height: var(--line-height-normal); }
+  .period { font-size: var(--font-size-sm); color: var(--color-fg-subtle); margin-top: 10px; }
+  .current { display: inline-block; margin-top: 14px; font-size: var(--font-size-xs); color: var(--color-success); border: 1px solid var(--color-border); padding: 3px var(--space-2); border-radius: var(--radius-sm); }
+  .contribution h3 { font-size: 19px; line-height: 1.45; font-weight: 700; letter-spacing: -0.02em; }
+  .contribution p { color: var(--color-fg-muted); line-height: 1.75; margin-top: var(--space-3); max-width: 73ch; }
+  .contribution .contribution-period { font-size: 12px; color: var(--color-fg-subtle); margin-top: var(--space-2); }
+  .contribution .technologies { font-size: 12px; color: var(--color-accent-alt); margin-top: 14px; line-height: 1.7; }
+  .contribution + .contribution { margin-top: 28px; padding-top: 28px; border-top: 1px solid var(--color-border-subtle); }
+  .public-work { padding: var(--space-8); margin-top: var(--space-2); border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-bg-elevated); }
+  .public-work h2 { font-size: 21px; line-height: 1.4; }
+  .public-work p { color: var(--color-fg-muted); max-width: 72ch; margin-top: var(--space-3); line-height: 1.65; }
+  .study-links { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6); margin-top: var(--space-6); list-style: none; }
+  .study-links a { font-size: var(--font-size-base); }
+  .study-links > li > span { display: block; color: var(--color-fg-subtle); font-size: 12px; line-height: 1.65; margin-top: 6px; }
+  .closing { display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--space-4); margin-top: 28px; font-size: var(--font-size-sm); }
+  @media (max-width: 760px) {
+    .engagement { grid-template-columns: 185px minmax(0, 1fr); gap: 28px; }
+  }
+  @media (max-width: 600px) {
+    .page-heading { padding: var(--space-2) 0 var(--space-8); }
+    .intro { font-size: var(--font-size-md); }
+    .engagement { grid-template-columns: 1fr; gap: 22px; padding: 28px 0; }
+    .engagement-meta h2 { font-size: var(--font-size-xl); }
+    .period { margin-top: 6px; }
+    .current { margin-top: 10px; }
+    .contribution h3 { font-size: 17px; }
+    .contribution p { font-size: 14px; }
+    .contribution + .contribution { margin-top: var(--space-6); padding-top: var(--space-6); }
+    .public-work { padding: 22px 18px; }
+    .study-links { grid-template-columns: 1fr; gap: 18px; }
+    .closing { margin-top: var(--space-6); }
+  }
+</style>

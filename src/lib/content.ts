@@ -39,6 +39,87 @@ export const ABOUT_LINES: readonly string[] = ABOUT_PARAGRAPHS.flatMap((paragrap
   i === 0 ? [paragraph] : ['', paragraph],
 );
 
+// ─── Experience ──────────────────────────────────────────────────────────────
+
+export const EXPERIENCE = {
+  intro: 'Selected engineering work in AI-powered development, backend APIs, test automation, and developer tooling.',
+  engagements: [
+    {
+      id: 'microsoft-current',
+      employer: 'Microsoft',
+      role: 'Software Engineer 2',
+      period: 'Jul 2025–Present',
+      current: true,
+      contributions: [
+        {
+          title: 'Prototype to Production',
+          description: 'Drive software from prototype to production through rotational assignments in Microsoft’s AI Development Acceleration Program (MAIDAP). Partner with cross-functional teams to improve products and create new applications and workflows.',
+        },
+      ],
+    },
+    {
+      id: 'us-ai',
+      employer: 'US AI',
+      role: 'Software Engineer, Contract',
+      period: 'Feb–Apr 2025',
+      contributions: [
+        {
+          title: 'Application Stability and Maintainability',
+          description: 'Resolved 60+ bugs in the Archangel application, addressing stability and performance issues. Refactored legacy components to improve maintainability.',
+        },
+      ],
+    },
+    {
+      id: 'microsoft-internships',
+      employer: 'Microsoft',
+      role: 'Software Engineer Intern',
+      period: 'Two separate internships',
+      contributions: [
+        {
+          title: 'Monitoring Integration and Release Testing',
+          period: 'Jun–Sep 2024',
+          description: 'Developed an internal C++ API to connect a monitoring tool to pods in a Kubernetes cluster. Refactored a Python automated test suite to support multiple software releases.',
+          technologies: ['C++', 'Python', 'Kubernetes'],
+        },
+        {
+          title: 'AI-Assisted Debugging',
+          period: 'May–Aug 2023',
+          description: 'Built a Python-based AI tool to assist debugging and improved its test suite. Defined project requirements and test plans, and documented test cases and debugging workflows.',
+          technologies: ['Python'],
+        },
+      ],
+    },
+    {
+      id: 'icims-internships',
+      employer: 'iCIMS',
+      role: 'Software Engineer Intern',
+      period: 'Two separate internships',
+      contributions: [
+        {
+          title: 'Component APIs and SDK Development',
+          period: 'Jun–Aug 2022',
+          description: 'Built a GraphQL backend API supporting custom queries over internally managed React components. Developed and debugged React components in JavaScript and added components to the internal SDK. Wrote documentation and initial test cases for the GraphQL API.',
+          technologies: ['GraphQL', 'React', 'JavaScript'],
+        },
+        {
+          title: 'Component Version Visibility',
+          period: 'Jun–Aug 2021',
+          description: 'Built a backend tool for tracking versions of 80+ internal React components. Used Bitbucket APIs to gather component-version data and Recharts to visualize versions by team.',
+          technologies: ['Bitbucket APIs', 'Recharts'],
+        },
+      ],
+    },
+  ],
+  publicWork: {
+    heading: 'Explore the public work',
+    intro: 'For examples you can inspect, explore these public projects and the engineering decisions behind them.',
+    links: [
+      { label: 'dev-setup', url: '/projects/dev-setup/', description: 'Development environment automation' },
+      { label: 'Phission', url: '/projects/phission/', description: 'A reproducible, synthetic-only email safety demo' },
+    ],
+  },
+};
+
 // ─── Projects ────────────────────────────────────────────────────────────────
 
 export const PROJECTS: readonly Project[] = [
@@ -153,6 +234,7 @@ export const SKILLS_LINES: readonly string[] = [
 export const RESUME = {
   url: '/resume/earl_tankard_jr-swe_resume-2026-10-04.pdf',
   filename: 'earl_tankard_jr-swe_resume-2026-10-04.pdf',
+  updated: 'Oct 4, 2026',
 } as const;
 
 // ─── Links ───────────────────────────────────────────────────────────────────

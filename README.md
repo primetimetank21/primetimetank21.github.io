@@ -5,19 +5,21 @@
 
 ## Portfolio experience
 
-- Professional identity, project case studies, skills, and contact links are rendered at build time and work without JavaScript.
+- Professional identity, selected experience, project case studies, skills, and contact links are rendered at build time and work without JavaScript.
 - Featured DevSetup and Phission cards start compact. Native **See more** disclosures expand independently with keyboard, touch, or JavaScript disabled. All flow, problem, approach, trade-off, evidence, and evidence links are present in the built HTML.
 - Visible **Read case study** links navigate normally in the same tab to `/projects/dev-setup/` and `/projects/phission/`. These static pages show the full studies, support no-JS navigation back to projects, and share the homepage's detail-body renderer and copy in `src/lib/content.ts`.
-- **More about me** in the existing homepage About section opens `/about/` in the same tab. The static About page shares identity, biography, skills/tools, and public contact data from `src/lib/content.ts`, links to the two existing studies, and supports no-JS navigation. The homepage's `#about` section and direct fragment links remain intact. All content pages use the shared **Home → About → Projects → Contact → Terminal** bar in `SiteNavLinks.astro`; About navigates to `/about/`, while Projects/Contact/Terminal use homepage fragments. Home and About identify their exact current page with `aria-current="page"`.
-- The seven projects and two studies remain the full public selection. This is **partial issue #9**: no additional studies or 404 redesign. Unknown and nested routes (including `/about/nested/`) remain real 404s. Phission remains a synthetic-only demo with the existing evidence and limitations; no live detection or historical usability claims are added.
+- **More about me** in the existing homepage About section opens `/about/` in the same tab. The static About page shares identity, biography, skills/tools, and public contact data from `src/lib/content.ts`, links to the two existing studies, and supports no-JS navigation. The homepage's `#about` section and direct fragment links remain intact.
+- **View experience** beside More about me opens `/experience/`. This static page presents selected engineering contributions in four employer/engagement groups, keeping current Microsoft employment separate from internships and each internship's dates explicit. Edit the approved introduction, roles, dates, contributions, technology labels, and public-work references in the `EXPERIENCE` export in `src/lib/content.ts`; the page renders that data without an accordion or terminal interaction. About remains the biography and working approach; Experience describes where the work happened and what was built or improved. Experience's native **Back to top** link scrolls smoothly when reduced motion is not requested, keeps the normal fragment/focus behavior, and remains instant for reduced-motion preferences. No animation library or page script is required.
+- All content pages use the shared **Home → About → Experience → Projects → Contact → Terminal** bar in `SiteNavLinks.astro`. About and Experience use `/about/` and `/experience/`; Projects/Contact/Terminal use homepage fragments. Home, About, and Experience identify only their exact current page with `aria-current="page"`. The shared skip link stays clipped within the viewport until focused and moves keyboard focus to main content.
+- The seven projects and two studies remain the full public selection. This is **partial issue #9**: no additional studies or 404 redesign. Unknown and nested routes (including `/about/nested/` and `/experience/nested/`) remain real 404s. Phission remains a synthetic-only demo with the existing evidence and limitations; no live detection or historical usability claims are added.
 - The terminal retains commands, history, completion, and theme switching, with normal keyboard navigation, focusable scrollback, and native mobile text editing.
-- **Download résumé (PDF)** in the homepage hero and About contact list uses a same-origin, native download link that works without JavaScript. Explore projects remains the primary action; navigation and terminal commands are unchanged.
+- **Download résumé (PDF)** in the homepage hero, About contact list, and Experience heading uses the same-origin, native download link and unchanged PDF bytes, including without JavaScript. Explore projects remains the primary homepage action; terminal commands are unchanged.
 
 ## Public résumé
 
-The approved PDF is served unchanged from [`public/resume/earl_tankard_jr-swe_resume-2026-10-04.pdf`](public/resume/earl_tankard_jr-swe_resume-2026-10-04.pdf) at `/resume/earl_tankard_jr-swe_resume-2026-10-04.pdf`. It is public, including the contact details in the document. The shared `RESUME` export in `src/lib/content.ts` supplies the URL and suggested download filename, separately from `CONTACT` and terminal output. Browser settings ultimately control download handling.
+The approved PDF is served unchanged from [`public/resume/earl_tankard_jr-swe_resume-2026-10-04.pdf`](public/resume/earl_tankard_jr-swe_resume-2026-10-04.pdf) at `/resume/earl_tankard_jr-swe_resume-2026-10-04.pdf`. It is public, including the contact details in the document. The shared `RESUME` export in `src/lib/content.ts` supplies the URL, suggested download filename, and displayed updated date (`RESUME.updated`), separately from `CONTACT` and terminal output. Browser settings ultimately control download handling.
 
-To update it, obtain approval for the exact replacement PDF and its public contents, copy only that PDF into `public/resume/` under a new dated filename, and update `RESUME.url` and `RESUME.filename`. Update the accepted byte count/hash in `src/__tests__/unit/content.test.ts` and `tests/e2e/smoke.spec.ts`, plus this documented path. Do not publish companion sources or private notes. Run type-check, unit tests, build, and E2E; review the affected visual baselines in the pinned Playwright container before merging. Publishing a new filename does not remove older public copies; review any retirement separately. Merge and deployment remain separate approval gates.
+To update it, obtain approval for the exact replacement PDF and its public contents, copy only that PDF into `public/resume/` under a new dated filename, and update `RESUME.url`, `RESUME.filename`, and `RESUME.updated`. Update the accepted byte count/hash in `src/__tests__/unit/content.test.ts` and `tests/e2e/smoke.spec.ts`, plus this documented path. Do not publish companion sources or private notes. Run type-check, unit tests, build, and E2E; review the affected visual baselines in the pinned Playwright container before merging. Publishing a new filename does not remove older public copies; review any retirement separately. Merge and deployment remain separate approval gates.
 
 ## Terminal commands and page routes
 
@@ -35,9 +37,9 @@ To update it, obtain approval for the exact replacement PDF and its public conte
 | `theme` | Toggle light/dark theme |
 | `clear` | Clear terminal output |
 
-Commands ignore case and normalize whitespace. `open` accepts only `about`, `dev-setup`, and `phission`, not URLs, paths, aliases, or extra arguments. The bare `about` command still prints the existing biography without navigating. Command-name completion includes `open`; argument completion is not provided.
+Commands ignore case and normalize whitespace. `open` accepts only `about`, `dev-setup`, and `phission`, not URLs, paths, aliases, or extra arguments. The bare `about` command still prints the existing biography without navigating. Experience is a normal page/navigation destination only: no `experience` or `open experience` command is provided. Command-name completion includes `open`; argument completion is not provided.
 
-New-tab requests run synchronously from Enter with `noopener,noreferrer`. The terminal **always supplies an ordinary clickable fallback link**, labeled with new-tab intent. It never claims a tab definitely opened or was blocked: `window.open` can return `null` even on success with `noopener`. If the call throws, the link remains usable and the terminal continues working. Browsers and user preferences ultimately control tab/window behavior. Homepage **Read case study** and **More about me** links, plus the About page's navigation, study, and contact links, retain normal same-tab and native link controls.
+New-tab requests run synchronously from Enter with `noopener,noreferrer`. The terminal **always supplies an ordinary clickable fallback link**, labeled with new-tab intent. It never claims a tab definitely opened or was blocked: `window.open` can return `null` even on success with `noopener`. If the call throws, the link remains usable and the terminal continues working. Browsers and user preferences ultimately control tab/window behavior. Homepage **Read case study**, **More about me**, and **View experience** links, plus shared navigation and the About/Experience pages' study and biography links, retain normal same-tab and native link controls.
 
 ## Stack
 
@@ -99,7 +101,7 @@ npm run test
 > ⚠️ **Generate baselines in the exact CI Playwright container: `mcr.microsoft.com/playwright:v1.61.1-noble`.**
 > A Linux host alone is not enough: differing fonts/browser libraries can change rendering. Do not commit host-generated screenshots as CI baselines.
 
-The visual suite covers collapsed and expanded homepages, About, both full case-study pages, terminal states, and 404s in light/dark desktop/mobile viewports. Viewports are emulated, not physical-device checks. Functional E2E separately covers native disclosures, no-JS pages, same-tab links, page metadata and sitemap membership, theme persistence, overflow, actual isolated new tabs, and fallback behavior. New About baselines and intentionally affected homepage/help baselines must be generated and reviewed in the pinned container before the visual gate can pass; do not generate host baselines.
+The visual suite covers collapsed and expanded homepages, About, Experience, both full case-study pages, terminal states, and 404s in light/dark desktop/mobile viewports. Viewports are emulated, not physical-device checks. Functional E2E separately covers native disclosures, no-JS pages, same-tab links, exact Experience copy, résumé downloads, shared keyboard navigation/skip links, page metadata and sitemap membership, theme persistence, contrast, overflow, actual isolated new tabs, and fallback behavior. Experience layout checks include 320/390/844/1362px widths. New Experience baselines and intentionally affected content-page baselines must be generated and reviewed in the pinned container before the visual gate can pass; do not generate host baselines.
 
 ### The visual check is a BLOCKING gate
 
@@ -170,7 +172,7 @@ git commit -m "test(visual): update Linux baselines"
 
 | Workflow | Trigger | Jobs |
 |----------|---------|------|
-| `Build & Check` | Pull request → `main` | Build · Type-check · Unit tests · E2E (smoke + terminal + case studies + About) · **Visual Regression (blocking)** |
+| `Build & Check` | Pull request → `main` | Build · Type-check · Unit tests · E2E (smoke + terminal + case studies + About + Experience) · **Visual Regression (blocking)** |
 | `Deploy to GitHub Pages` | Push to `main` | Build · Deploy |
 | `Update Visual Baselines` | Manual (`workflow_dispatch`, `branch` and `commit_baselines` inputs) | Regenerate + upload Linux snapshots; optionally commit/update branches and PRs (default: true) |
 
@@ -216,6 +218,7 @@ git commit -m "test(visual): update Linux baselines"
 │   ├── pages/
 │   │   ├── index.astro
 │   │   ├── about.astro                ← Static biography, skills + public links
+│   │   ├── experience.astro           ← Selected contributions, roles + distinct periods
 │   │   ├── projects/[slug].astro      ← Exactly two prerendered case-study routes
 │   │   └── 404.astro                  ← Truthful route-error page
 │   ├── styles/
@@ -232,6 +235,7 @@ git commit -m "test(visual): update Linux baselines"
 │       ├── terminal-open.spec.ts      ← Real isolated tabs, fallbacks + invalid input
 │       ├── case-studies.spec.ts       ← Disclosures, no-JS routes, metadata + 404s
 │       ├── about.spec.ts              ← Shared content, no-JS links, metadata + theme
+│       ├── experience.spec.ts         ← Approved copy, native links, layout + themes
 │       └── visual.spec.ts             ← Visual regression (blocking)
 ├── astro.config.mjs
 ├── playwright.config.ts

@@ -1,13 +1,14 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { describe, it, expect } from 'vitest';
-import { PROJECTS, CASE_STUDIES, CONTACT, LINKS_LINES, RESUME } from '../../lib/content';
+import { PROJECTS, CASE_STUDIES, CONTACT, LINKS_LINES, RESUME, EXPERIENCE } from '../../lib/content';
 
 describe('public résumé', () => {
   it('shares the accepted same-origin asset URL and dated download filename', () => {
     expect(RESUME).toEqual({
       url: '/resume/earl_tankard_jr-swe_resume-2026-10-04.pdf',
       filename: 'earl_tankard_jr-swe_resume-2026-10-04.pdf',
+      updated: 'Oct 4, 2026',
     });
     expect(RESUME.url).toBe(`/resume/${RESUME.filename}`);
   });
@@ -35,6 +36,69 @@ describe('public résumé', () => {
       '  LinkedIn  https://www.linkedin.com/in/earl-tankard-jr/',
       '  Portfolio https://primetimetank21.github.io',
     ]);
+  });
+});
+
+describe('experience content', () => {
+  it('keeps four reverse-chronological groups with separate internship periods', () => {
+    expect(EXPERIENCE.engagements.map(({ contributions, ...engagement }) => engagement)).toEqual([
+      { id: 'microsoft-current', employer: 'Microsoft', role: 'Software Engineer 2', period: 'Jul 2025–Present', current: true },
+      { id: 'us-ai', employer: 'US AI', role: 'Software Engineer, Contract', period: 'Feb–Apr 2025' },
+      { id: 'microsoft-internships', employer: 'Microsoft', role: 'Software Engineer Intern', period: 'Two separate internships' },
+      { id: 'icims-internships', employer: 'iCIMS', role: 'Software Engineer Intern', period: 'Two separate internships' },
+    ]);
+    expect(EXPERIENCE.engagements.map(engagement => engagement.contributions.length)).toEqual([1, 1, 2, 2]);
+  });
+
+  it('preserves all six approved Title Case headings, body facts, dates and supported technologies', () => {
+    expect(EXPERIENCE.engagements.flatMap(engagement => engagement.contributions)).toEqual([
+      {
+        title: 'Prototype to Production',
+        description: 'Drive software from prototype to production through rotational assignments in Microsoft’s AI Development Acceleration Program (MAIDAP). Partner with cross-functional teams to improve products and create new applications and workflows.',
+      },
+      {
+        title: 'Application Stability and Maintainability',
+        description: 'Resolved 60+ bugs in the Archangel application, addressing stability and performance issues. Refactored legacy components to improve maintainability.',
+      },
+      {
+        title: 'Monitoring Integration and Release Testing',
+        period: 'Jun–Sep 2024',
+        description: 'Developed an internal C++ API to connect a monitoring tool to pods in a Kubernetes cluster. Refactored a Python automated test suite to support multiple software releases.',
+        technologies: ['C++', 'Python', 'Kubernetes'],
+      },
+      {
+        title: 'AI-Assisted Debugging',
+        period: 'May–Aug 2023',
+        description: 'Built a Python-based AI tool to assist debugging and improved its test suite. Defined project requirements and test plans, and documented test cases and debugging workflows.',
+        technologies: ['Python'],
+      },
+      {
+        title: 'Component APIs and SDK Development',
+        period: 'Jun–Aug 2022',
+        description: 'Built a GraphQL backend API supporting custom queries over internally managed React components. Developed and debugged React components in JavaScript and added components to the internal SDK. Wrote documentation and initial test cases for the GraphQL API.',
+        technologies: ['GraphQL', 'React', 'JavaScript'],
+      },
+      {
+        title: 'Component Version Visibility',
+        period: 'Jun–Aug 2021',
+        description: 'Built a backend tool for tracking versions of 80+ internal React components. Used Bitbucket APIs to gather component-version data and Recharts to visualize versions by team.',
+        technologies: ['Bitbucket APIs', 'Recharts'],
+      },
+    ]);
+  });
+
+  it('retains the accepted introduction and public-work references without new claims', () => {
+    expect(EXPERIENCE.intro).toBe('Selected engineering work in AI-powered development, backend APIs, test automation, and developer tooling.');
+    expect(EXPERIENCE.publicWork).toEqual({
+      heading: 'Explore the public work',
+      intro: 'For examples you can inspect, explore these public projects and the engineering decisions behind them.',
+      links: [
+        { label: 'dev-setup', url: '/projects/dev-setup/', description: 'Development environment automation' },
+        { label: 'Phission', url: '/projects/phission/', description: 'A reproducible, synthetic-only email safety demo' },
+      ],
+    });
+    expect(EXPERIENCE.publicWork.links.map(link => link.url)).toEqual(CASE_STUDIES.map(project => project.caseStudy.path));
+    expect(JSON.stringify(EXPERIENCE)).not.toMatch(/—|112%|research|publications|freelance/i);
   });
 });
 

@@ -189,7 +189,7 @@ test.describe('static case-study pages', () => {
         expect(await page.locator('h1').evaluate(el => getComputedStyle(el).fontFamily)).toContain('JetBrains Mono');
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
         await expect(page.getByTestId('theme-toggle')).toBeHidden(); // no dead control without JS
-        for (const [label, href] of [['Home', '/'], ['Projects', '/#projects'], ['Contact', '/#contact'], ['Terminal', '/#terminal']]) {
+        for (const [label, href] of [['Home', '/'], ['About', '/about/'], ['Experience', '/experience/'], ['Projects', '/#projects'], ['Contact', '/#contact'], ['Terminal', '/#terminal']]) {
           await expect(page.getByRole('navigation').getByRole('link', { name: label, exact: true })).toHaveAttribute('href', href);
         }
         await page.getByRole('link', { name: '← Back to projects' }).last().click();
@@ -199,7 +199,7 @@ test.describe('static case-study pages', () => {
     }
   }
 
-  for (const path of ['/projects/missing/', '/projects/dev-setup/nested/', '/projects/phission/nested/', '/projects/apple-music-playlist-converter/', '/about/nested/']) {
+  for (const path of ['/projects/missing/', '/projects/dev-setup/nested/', '/projects/phission/nested/', '/projects/apple-music-playlist-converter/', '/about/nested/', '/experience/nested/']) {
     test(`${path} remains a real 404`, async ({ page }) => {
       expect((await page.goto(path))?.status()).toBe(404);
       await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName('Page not found');
@@ -210,7 +210,7 @@ test.describe('static case-study pages', () => {
   }
 });
 
-test('sitemap contains exactly home, about and the two case-study routes', async ({ request }) => {
+test('sitemap contains exactly home, about, experience and the two case-study routes', async ({ request }) => {
   const index = await request.get('/sitemap-index.xml');
   expect(index.status()).toBe(200);
   const sitemapURL = (await index.text()).match(/<loc>(.*?)<\/loc>/)![1];
@@ -220,6 +220,7 @@ test('sitemap contains exactly home, about and the two case-study routes', async
   expect(locations.sort()).toEqual([
     'https://primetimetank21.github.io/',
     'https://primetimetank21.github.io/about/',
+    'https://primetimetank21.github.io/experience/',
     ...CASE_STUDIES.map(project => `https://primetimetank21.github.io${project.caseStudy.path}`),
   ].sort());
 });
