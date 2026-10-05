@@ -58,19 +58,19 @@ test.describe('static About page', () => {
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 
       const nav = page.getByRole('navigation', { name: 'Site navigation' });
-      await expect(nav.getByRole('link')).toHaveText(['Home', 'About', 'Projects', 'Contact', 'Terminal']);
+      await expect(nav.getByRole('link')).toHaveText(['Home', 'About', 'Experience', 'Projects', 'Contact', 'Terminal']);
       await expect(nav.locator('[aria-current]')).toHaveCount(1);
       const current = nav.getByRole('link', { name: 'About', exact: true });
       await expect(current).toHaveAttribute('href', '/about/');
       await expect(current).toHaveAttribute('aria-current', 'page');
       expect(await current.getAttribute('target')).toBeNull();
-      for (const [label, href] of [['Home', '/'], ['Projects', '/#projects'], ['Contact', '/#contact'], ['Terminal', '/#terminal']]) {
+      for (const [label, href] of [['Home', '/'], ['Experience', '/experience/'], ['Projects', '/#projects'], ['Contact', '/#contact'], ['Terminal', '/#terminal']]) {
         const link = nav.getByRole('link', { name: label, exact: true });
         await expect(link).toHaveAttribute('href', href);
         expect(await link.getAttribute('target')).toBeNull();
         await link.click();
         await expect(page).toHaveURL(href);
-        if (label !== 'Home') await expect(page.locator(`#${label.toLowerCase()}-heading`)).toBeInViewport();
+        if (href.includes('#')) await expect(page.locator(`#${label.toLowerCase()}-heading`)).toBeInViewport();
         expect(context.pages()).toHaveLength(1);
         await page.goBack();
         await expect(page).toHaveURL('/about/');
@@ -181,7 +181,7 @@ for (const width of [1280, 390]) {
     await page.goto('/about/');
     const nav = page.getByRole('navigation');
     await page.keyboard.press('Tab'); // Skip link
-    for (const label of ['Home', 'About', 'Projects', 'Contact', 'Terminal']) {
+    for (const label of ['Home', 'About', 'Experience', 'Projects', 'Contact', 'Terminal']) {
       await page.keyboard.press('Tab');
       const link = nav.getByRole('link', { name: label, exact: true });
       await expect(link).toBeFocused();

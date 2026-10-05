@@ -376,7 +376,7 @@ test.describe('keyboard navigation', () => {
     await page.keyboard.press('Tab');
     await expect(page.locator('.skip-link')).toBeFocused();
     await page.keyboard.press('Tab');
-    for (const label of ['Home', 'About']) {
+    for (const label of ['Home', 'About', 'Experience']) {
       await expect(page.getByRole('navigation').getByRole('link', { name: label, exact: true })).toBeFocused();
       await page.keyboard.press('Tab');
     }

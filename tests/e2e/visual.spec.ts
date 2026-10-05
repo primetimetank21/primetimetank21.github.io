@@ -40,6 +40,14 @@ for (const theme of ['dark', 'light']) {
         await expect(page).toHaveScreenshot(`about-${theme}-${viewport.name}.png`, { fullPage: true, animations: 'disabled' });
       });
 
+      test(`experience — ${viewport.name}`, async ({ page }) => {
+        await page.setViewportSize(viewport);
+        await page.goto('/experience/');
+        await page.evaluate(() => document.fonts.ready);
+        await expect(page.locator('h1')).toHaveText('Experience');
+        await expect(page).toHaveScreenshot(`experience-${theme}-${viewport.name}.png`, { fullPage: true, animations: 'disabled' });
+      });
+
       for (const project of CASE_STUDIES) {
         test(`${project.name} case study — ${viewport.name}`, async ({ page }) => {
           await page.setViewportSize(viewport);

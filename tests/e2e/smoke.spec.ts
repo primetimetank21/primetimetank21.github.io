@@ -41,7 +41,7 @@ test('public résumé URL serves the exact accepted PDF with its media type', as
   expect(bytes.equals(acceptedResume)).toBe(true);
 });
 
-for (const route of ['/', '/about/']) {
+for (const route of ['/', '/about/', '/experience/']) {
   // Without JavaScript the existing site uses its default dark theme.
   for (const mode of [
     { javaScriptEnabled: true, colorScheme: 'dark' },
@@ -57,7 +57,7 @@ for (const route of ['/', '/about/']) {
           await page.goto(route);
           await page.evaluate(() => document.fonts.ready);
           if (mode.javaScriptEnabled) await expect(page.locator('html')).toHaveAttribute('data-theme', mode.colorScheme);
-          const group = page.locator(route === '/' ? '.hero-actions' : '.about-page .contact-links');
+          const group = page.locator(route === '/' ? '.hero-actions' : route === '/about/' ? '.about-page .contact-links' : '.experience-page .page-actions');
           const link = group.getByRole('link', { name: resumeLabel, exact: true });
           await expect(page.locator('a[download]')).toHaveCount(1);
           await expect(link).toBeVisible();
@@ -73,8 +73,11 @@ for (const route of ['/', '/about/']) {
             ]);
             await expect(group.locator('.primary-link')).toHaveAttribute('href', '#projects');
             await expect(group.getByRole('link', { name: 'Connect on LinkedIn' })).toHaveAttribute('href', CONTACT.links[1].url);
-          } else {
+          } else if (route === '/about/') {
             await expect(group.getByRole('link')).toHaveText([...CONTACT.links.map(contact => contact.label), resumeLabel]);
+          } else {
+            await expect(group.getByRole('link')).toHaveText([resumeLabel]);
+            await expect(group.locator('.document-meta')).toHaveText(`The one-page version · updated ${RESUME.updated}`);
           }
           expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
           expect(await group.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
@@ -229,11 +232,11 @@ test.describe('404 page', () => {
 
 
 const navigation = [
-  ['Home', '/'], ['About', '/about/'], ['Projects', '/#projects'],
+  ['Home', '/'], ['About', '/about/'], ['Experience', '/experience/'], ['Projects', '/#projects'],
   ['Contact', '/#contact'], ['Terminal', '/#terminal'],
 ] as const;
 
-for (const route of ['/', '/about/', '/projects/dev-setup/', '/projects/phission/']) {
+for (const route of ['/', '/about/', '/experience/', '/projects/dev-setup/', '/projects/phission/']) {
   for (const javaScriptEnabled of [true, false]) {
     test.describe(`shared navigation on ${route}, JS ${javaScriptEnabled}`, () => {
       test.use({ javaScriptEnabled });
@@ -248,14 +251,19 @@ for (const route of ['/', '/about/', '/projects/dev-setup/', '/projects/phission
             await expect(link).toHaveAttribute('href', href);
             expect(await link.getAttribute('target')).toBeNull();
           }
-          const current = nav.locator('[aria-current="page"]');
-          if (route === '/' || route === '/about/') {
+          const current = nav.locator('[aria-current]');
+          const currentLink = navigation.find(([, href]) => href === route);
+          if (currentLink) {
             await expect(current).toHaveCount(1);
-            await expect(current).toHaveText(route === '/' ? 'Home' : 'About');
+            await expect(current).toHaveText(currentLink[0]);
+            await expect(current).toHaveAttribute('aria-current', 'page');
           } else await expect(current).toHaveCount(0);
           expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
           await nav.getByRole('link', { name: 'About', exact: true }).click();
           await expect(page).toHaveURL('/about/');
+          await nav.getByRole('link', { name: 'Experience', exact: true }).click();
+          await expect(page).toHaveURL('/experience/');
+          await expect(nav.locator('[aria-current]')).toHaveText('Experience');
           await nav.getByRole('link', { name: 'Projects', exact: true }).click();
           await expect(page).toHaveURL('/#projects');
           await expect(page.locator('#projects-heading')).toBeInViewport();
@@ -281,6 +289,39 @@ for (const route of ['/', '/about/', '/projects/dev-setup/', '/projects/phission
       await expect(page.getByTestId('theme-toggle')).toBeFocused();
     });
   }
+}
+
+for (const javaScriptEnabled of [true, false]) {
+  test.describe(`shared skip link, JS ${javaScriptEnabled}`, () => {
+    test.use({ javaScriptEnabled });
+    for (const width of [320, 1362]) {
+      test(`bounded hiding, first-Tab reveal and Enter-to-main on every route at ${width}px`, async ({ page }) => {
+        await page.setViewportSize({ width, height: 844 });
+        for (const route of ['/', '/about/', '/experience/', '/projects/dev-setup/', '/projects/phission/', '/experience/nested/']) {
+          await page.goto(route);
+          const skip = page.getByRole('link', { name: 'Skip to content', exact: true });
+          const hiddenBox = (await skip.boundingBox())!;
+          expect(hiddenBox.width).toBe(1);
+          expect(hiddenBox.height).toBe(1);
+          expect(hiddenBox.x).toBeGreaterThanOrEqual(0);
+          expect(hiddenBox.x + hiddenBox.width).toBeLessThanOrEqual(width);
+          expect(await skip.evaluate(el => getComputedStyle(el).clipPath)).toBe('inset(50%)');
+          await page.keyboard.press('Tab');
+          await expect(skip).toBeFocused();
+          await expect(skip).toBeInViewport();
+          const visibleBox = (await skip.boundingBox())!;
+          expect(visibleBox.width).toBeGreaterThan(1);
+          expect(visibleBox.x).toBeGreaterThanOrEqual(0);
+          expect(visibleBox.x + visibleBox.width).toBeLessThanOrEqual(width);
+          expect(await skip.evaluate(el => getComputedStyle(el).clipPath)).toBe('none');
+          expect(parseFloat(await skip.evaluate(el => getComputedStyle(el).outlineWidth))).toBeGreaterThanOrEqual(2);
+          await page.keyboard.press('Enter');
+          await expect(page.locator('main')).toBeFocused();
+          await expect(page).toHaveURL(`${route}#main-content`);
+        }
+      });
+    }
+  });
 }
 
 // Substantive HTML must be available without terminal interaction or JavaScript.

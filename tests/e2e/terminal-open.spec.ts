@@ -148,7 +148,7 @@ test('invalid arguments never call window.open or create arbitrary output links;
   await page.goto('/');
   const input = page.locator('#terminal-input');
   for (const argument of [
-    'missing', 'about extra', 'about phission', '/about/', 'about/', '../about', 'about/nested',
+    'missing', 'experience', '/experience/', 'about extra', 'about phission', '/about/', 'about/', '../about', 'about/nested',
     'about?x=1', 'about#skills', '%61bout', 'https://primetimetank21.github.io/about/',
     'dev-setup extra', 'phission dev-setup', '/projects/dev-setup/', '../phission',
     'https://example.com', 'https://primetimetank21.github.io/projects/phission/', '//example.com',
