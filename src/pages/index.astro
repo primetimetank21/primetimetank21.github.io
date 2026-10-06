@@ -4,7 +4,7 @@ import ThemeToggle from '../components/ThemeToggle.astro';
 import SiteNavLinks from '../components/SiteNavLinks.astro';
 import TerminalShell from '../components/Terminal/TerminalShell.astro';
 import ProjectCard from '../components/ProjectCard.astro';
-import { PROFILE, ABOUT_PARAGRAPHS, PROJECTS, CASE_STUDIES, SKILL_GROUPS, CONTACT, RESUME } from '../lib/content';
+import { PROFILE, ABOUT_PARAGRAPHS, PROJECTS, SKILL_GROUPS, CONTACT, RESUME } from '../lib/content';
 ---
 
 <Layout>
@@ -32,11 +32,11 @@ import { PROFILE, ABOUT_PARAGRAPHS, PROJECTS, CASE_STUDIES, SKILL_GROUPS, CONTAC
         <p>Tools, integrations, and experiments — with source you can explore.</p>
       </div>
       <div class="featured-projects">
-        {CASE_STUDIES.map(project => <ProjectCard project={project} />)}
+        {PROJECTS.filter(project => project.featured).map(project => <ProjectCard project={project} />)}
       </div>
       <h3 class="other-heading">More projects</h3>
       <div class="other-projects">
-        {PROJECTS.filter(project => !project.caseStudy).map(project => <ProjectCard project={project} />)}
+        {PROJECTS.filter(project => !project.featured).map(project => <ProjectCard project={project} />)}
       </div>
     </section>
 

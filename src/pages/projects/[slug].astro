@@ -7,7 +7,7 @@ import CaseStudyBody from '../../components/CaseStudyBody.astro';
 import { CASE_STUDIES, PROFILE } from '../../lib/content';
 
 export const getStaticPaths = (() => CASE_STUDIES.map(project => ({
-  params: { slug: project.name },
+  params: { slug: project.caseStudy.path.split('/')[2] },
   props: { project },
 }))) satisfies GetStaticPaths;
 

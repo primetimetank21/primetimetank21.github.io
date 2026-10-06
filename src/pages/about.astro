@@ -36,7 +36,7 @@ import { PROFILE, ABOUT_PARAGRAPHS, SKILL_GROUPS, CASE_STUDIES, CONTACT, RESUME 
     <section aria-labelledby="work-heading">
       <h2 id="work-heading">Public work</h2>
       <ul class="study-links">
-        {CASE_STUDIES.map(project => <li><a href={project.caseStudy.path}>{project.name} — {project.caseStudy.title}</a></li>)}
+        {CASE_STUDIES.filter(project => project.featured).map(project => <li><a href={project.caseStudy.path}>{project.name} — {project.caseStudy.title}</a></li>)}
       </ul>
     </section>
 

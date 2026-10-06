@@ -254,8 +254,12 @@ describe('open pages', () => {
     { label: 'about', href: '/about/' },
     { label: 'dev-setup', href: '/projects/dev-setup/' },
     { label: 'phission', href: '/projects/phission/' },
+    { label: 'portfolio', href: '/projects/portfolio/' },
+    { label: 'finlitt', href: '/projects/finlitt/' },
+    { label: 'trustdefi', href: '/projects/trustdefi/' },
+    { label: 'instagram-scanner', href: '/projects/instagram-scanner/' },
   ];
-  const usage = 'Usage: open [about | dev-setup | phission]';
+  const usage = 'Usage: open [about | dev-setup | phission | portfolio | finlitt | trustdefi | instagram-scanner]';
 
   it.each(['open', '  OPEN \t '])('lists structured links without navigation for %j', raw => {
     const result = executeCommand(raw);
@@ -278,6 +282,13 @@ describe('open pages', () => {
 
   it.each([
     'missing', 'dev-setup extra', 'dev-setup phission', 'phission extra',
+    'experience', 'PIT-UN-hackathon2023', 'hackUMBC2022', 'primetimetank21.github.io',
+    'instagram', 'fin-litt', 'trust-defi',
+    ...['portfolio', 'finlitt', 'trustdefi', 'instagram-scanner'].flatMap(name => [
+      `${name} extra`, `${name}/`, `../${name}`, `${name}/nested`,
+      `${name}?x=1`, `${name}#evidence`, `"${name}"`,
+      `/projects/${name}/`, `https://primetimetank21.github.io/projects/${name}/`,
+    ]),
     'about extra', 'about dev-setup', 'about\nphission', 'about/', '/about', '/about/',
     '../about', 'about/nested', 'ABOUT?x=1', 'about#skills', '%61bout', '"about"',
     'https://primetimetank21.github.io/about/', 'contact', 'apple-music-playlist-converter',

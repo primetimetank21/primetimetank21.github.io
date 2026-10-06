@@ -97,7 +97,7 @@ describe('experience content', () => {
         { label: 'Phission', url: '/projects/phission/', description: 'A reproducible, synthetic-only email safety demo' },
       ],
     });
-    expect(EXPERIENCE.publicWork.links.map(link => link.url)).toEqual(CASE_STUDIES.map(project => project.caseStudy.path));
+    expect(EXPERIENCE.publicWork.links.map(link => link.url)).toEqual(CASE_STUDIES.filter(project => project.featured).map(project => project.caseStudy.path));
     expect(JSON.stringify(EXPERIENCE)).not.toMatch(/—|112%|research|publications|freelance/i);
   });
 });
@@ -116,19 +116,52 @@ describe('project content', () => {
   });
 
   it('features only DevSetup and Phission', () => {
-    expect(PROJECTS.filter(project => project.caseStudy).map(project => project.name))
-      .toEqual(['dev-setup', 'phission']);
+    const featured = PROJECTS.filter(project => project.featured);
+    expect(featured.map(project => project.name)).toEqual(['dev-setup', 'phission']);
+    expect(featured.every(project => project.caseStudy)).toBe(true);
+    expect(PROJECTS.filter(project => !project.featured)).toHaveLength(5);
   });
 
-  it('shares exactly the two static destinations with the featured projects', () => {
+  it('shares six unique static destinations independently of repository names and featuredness', () => {
     expect(CASE_STUDIES).toEqual(PROJECTS.filter(project => project.caseStudy));
-    expect(CASE_STUDIES.map(project => project.caseStudy.path)).toEqual([
-      '/projects/dev-setup/', '/projects/phission/',
+    const paths = CASE_STUDIES.map(project => project.caseStudy.path);
+    expect(paths).toEqual([
+      '/projects/dev-setup/', '/projects/phission/', '/projects/finlitt/',
+      '/projects/trustdefi/', '/projects/instagram-scanner/', '/projects/portfolio/',
     ]);
-    for (const project of CASE_STUDIES) {
-      expect(project.caseStudy.path).toBe(`/projects/${project.name}/`);
+    expect(new Set(paths).size).toBe(6);
+    for (const path of paths) expect(path).toMatch(/^\/projects\/[a-z0-9-]+\/$/);
+    expect(CASE_STUDIES.filter(project => !project.featured)).toHaveLength(4);
+    expect(PROJECTS.filter(project => !project.caseStudy)).toHaveLength(1);
+  });
+
+  it('pins every new study evidence link to the reviewed public source revision', () => {
+    const revisions: Record<string, string> = {
+      'PIT-UN-hackathon2023': 'bf5aaa7f1031478f16527bd23c5f71a16d856dbe',
+      hackUMBC2022: '3fd8040b1f6caf6bce1c3dc59a3e9ba315d42fcb',
+      'instagram-scanner': '6ce197e541d264f19a51eff4e3c91f3d8b3ec91c',
+      'primetimetank21.github.io': '3273d8fa4d27842c915ac5e96614a34b00097cb9',
+    };
+    for (const project of CASE_STUDIES.filter(project => !project.featured)) {
+      expect(project.caseStudy.links.length).toBeGreaterThanOrEqual(3);
+      for (const link of project.caseStudy.links) {
+        expect(link.url.startsWith(`${project.url}/blob/${revisions[project.name]}/`)).toBe(true);
+      }
     }
-    expect(PROJECTS.filter(project => !project.caseStudy)).toHaveLength(5);
+  });
+
+  it('keeps the new historical studies candid about implementation and validation limits', () => {
+    const study = (name: string) => CASE_STUDIES.find(project => project.name === name)!.caseStudy;
+    expect(study('PIT-UN-hackathon2023').tradeoff).toContain('without authenticating');
+    expect(study('PIT-UN-hackathon2023').tradeoff).toContain('AI personalization was future scope');
+    expect(study('hackUMBC2022').tradeoff).toContain('Missing labels and fetch failures must not be read as wallet safety');
+    expect(study('hackUMBC2022').tradeoff).toContain('does not implement an ML fraud model');
+    expect(study('instagram-scanner').tradeoff).toContain('sensitive account data');
+    expect(study('instagram-scanner').tradeoff).toContain('Private web endpoints');
+    expect(study('instagram-scanner').evidence).toContain('no Instagram automation was executed');
+    for (const name of ['PIT-UN-hackathon2023', 'hackUMBC2022', 'instagram-scanner']) {
+      expect(study(name).evidence).toContain('not been revalidated');
+    }
   });
 
   it('retains the converter as a secondary project without a case study', () => {

@@ -138,22 +138,37 @@ test.describe('static case-study pages', () => {
   test.use({ javaScriptEnabled: false });
 
   for (const project of CASE_STUDIES) {
-    for (const width of [1280, 390]) {
-      test(`${project.name} has the same full content, metadata and navigation at ${width}px`, async ({ page, context, request }) => {
+    for (const width of [1280, 390, 320]) {
+      test(`${project.name} has full shared content, metadata and native navigation at ${width}px`, async ({ page, context, request }) => {
         const study = project.caseStudy;
         await page.setViewportSize({ width, height: 844 });
         await page.goto('/');
         const card = page.getByRole('article', { name: project.name, exact: true });
-        await card.locator('summary').click();
-        const homeBody = await card.locator('.case-study').innerText();
+        let homeBody: string | undefined;
+        if (project.featured) {
+          await card.locator('summary').click();
+          homeBody = await card.locator('.case-study').innerText();
+          await page.keyboard.press('Shift+Tab'); // Source
+          await page.keyboard.press('Shift+Tab'); // Read case study
+        } else {
+          await expect(card.locator('details, .case-study, .technologies')).toHaveCount(0);
+          await expect(card).not.toHaveClass(/featured/);
+          await expect(card.getByRole('heading', { level: 3 })).toHaveText(project.name);
+        }
         const link = card.getByRole('link', { name: `Read case study for ${project.name}` });
         expect(await link.getAttribute('target')).toBeNull();
         const responsePromise = page.waitForResponse(response => new URL(response.url()).pathname === study.path);
-        await link.click();
+        // Exercise actual keyboard navigation, including the compact-card links.
+        for (let i = 0; i < 40 && !await link.evaluate(el => el === document.activeElement); i++) {
+          await page.keyboard.press('Tab');
+        }
+        await expect(link).toBeFocused();
+        expect(parseFloat(await link.evaluate(el => getComputedStyle(el).outlineWidth))).toBeGreaterThanOrEqual(2);
+        await page.keyboard.press('Enter');
         expect((await responsePromise).status()).toBe(200);
         await expect(page).toHaveURL(study.path);
         expect(context.pages()).toHaveLength(1); // ordinary same-tab navigation
-        expect(await page.locator('.case-study').innerText()).toBe(homeBody);
+        if (homeBody !== undefined) expect(await page.locator('.case-study').innerText()).toBe(homeBody);
         await expect(page.locator('details')).toHaveCount(0);
         await expect(page.locator('h1')).toHaveText(study.title);
         await expect(page.locator('h2')).toHaveText(['Problem', 'Approach', 'Engineering trade-off', 'Evidence']);
@@ -199,7 +214,11 @@ test.describe('static case-study pages', () => {
     }
   }
 
-  for (const path of ['/projects/missing/', '/projects/dev-setup/nested/', '/projects/phission/nested/', '/projects/apple-music-playlist-converter/', '/about/nested/', '/experience/nested/']) {
+  for (const path of [
+    '/projects/missing/', '/projects/apple-music-playlist-converter/', '/about/nested/', '/experience/nested/',
+    '/projects/PIT-UN-hackathon2023/', '/projects/hackUMBC2022/', '/projects/primetimetank21.github.io/',
+    ...CASE_STUDIES.map(project => `${project.caseStudy.path}nested/`),
+  ]) {
     test(`${path} remains a real 404`, async ({ page }) => {
       expect((await page.goto(path))?.status()).toBe(404);
       await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName('Page not found');
@@ -210,7 +229,7 @@ test.describe('static case-study pages', () => {
   }
 });
 
-test('sitemap contains exactly home, about, experience and the two case-study routes', async ({ request }) => {
+test('sitemap contains exactly home, about, experience and the six case-study routes', async ({ request }) => {
   const index = await request.get('/sitemap-index.xml');
   expect(index.status()).toBe(200);
   const sitemapURL = (await index.text()).match(/<loc>(.*?)<\/loc>/)![1];
