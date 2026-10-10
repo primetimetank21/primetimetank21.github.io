@@ -65,8 +65,10 @@ export interface CommandResult {
 
 const OPEN_DESTINATIONS: Record<string, CommandLink> = Object.fromEntries([
   ['about', { label: 'about', href: '/about/' }],
-  ...CASE_STUDIES.map(project => [
-    project.name, { label: project.name, href: project.caseStudy.path },
+  // Explicit command names, not repository names or an arbitrary path resolver.
+  // Study paths remain the source of truth for the actual destinations.
+  ...['dev-setup', 'phission', 'portfolio', 'finlitt', 'trustdefi', 'instagram-scanner'].map(name => [
+    name, { label: name, href: CASE_STUDIES.find(project => project.caseStudy.path.split('/')[2] === name)!.caseStudy.path },
   ]),
 ]);
 const OPEN_USAGE = `Usage: open [${Object.keys(OPEN_DESTINATIONS).join(' | ')}]`;

@@ -48,13 +48,15 @@ for (const theme of ['dark', 'light']) {
         await expect(page).toHaveScreenshot(`experience-${theme}-${viewport.name}.png`, { fullPage: true, animations: 'disabled' });
       });
 
+      // All six routes, not just the two homepage features. Names follow route slugs.
       for (const project of CASE_STUDIES) {
-        test(`${project.name} case study — ${viewport.name}`, async ({ page }) => {
+        const slug = project.caseStudy.path.split('/')[2];
+        test(`${slug} case study — ${viewport.name}`, async ({ page }) => {
           await page.setViewportSize(viewport);
           await page.goto(project.caseStudy.path);
           await page.evaluate(() => document.fonts.ready);
           await expect(page.locator('h1')).toHaveText(project.caseStudy.title);
-          await expect(page).toHaveScreenshot(`case-study-${project.name}-${theme}-${viewport.name}.png`, { fullPage: true, animations: 'disabled' });
+          await expect(page).toHaveScreenshot(`case-study-${slug}-${theme}-${viewport.name}.png`, { fullPage: true, animations: 'disabled' });
         });
       }
 

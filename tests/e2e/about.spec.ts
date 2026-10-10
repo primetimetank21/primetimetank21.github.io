@@ -37,7 +37,14 @@ test.describe('static About page', () => {
       await expect(main.locator('.skills dt')).toHaveText(SKILL_GROUPS.map(group => group.label));
       await expect(main.locator('.skills dd')).toHaveText(SKILL_GROUPS.map(group => group.items.join(' · ')));
       await expect(main.getByText(CONTACT.summary, { exact: true })).toBeVisible();
-      await expect(main.locator('a')).toHaveCount(CASE_STUDIES.length + CONTACT.links.length + 1);
+      await expect(main.locator('a')).toHaveCount(2 + CONTACT.links.length + 1);
+      // New detail pages must not expand the accepted About public-work copy.
+      await expect(main.locator('.study-links a')).toHaveText([
+        'dev-setup — Development environment automation',
+        'phission — From HCI prototype to a reproducible demo',
+      ]);
+      expect(await main.locator('.study-links a').evaluateAll(links => links.map(link => link.getAttribute('href'))))
+        .toEqual(['/projects/dev-setup/', '/projects/phission/']);
       await expect(main.locator('.contact-links a')).toHaveText([
         ...CONTACT.links.map(link => link.label), 'Download résumé (PDF)',
       ]);
@@ -75,7 +82,7 @@ test.describe('static About page', () => {
         await page.goBack();
         await expect(page).toHaveURL('/about/');
       }
-      for (const project of CASE_STUDIES) {
+      for (const project of CASE_STUDIES.filter(project => project.featured)) {
         const link = main.getByRole('link', { name: `${project.name} — ${project.caseStudy.title}`, exact: true });
         await expect(link).toHaveAttribute('href', project.caseStudy.path);
         expect(await link.getAttribute('target')).toBeNull();

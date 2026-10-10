@@ -3,7 +3,10 @@ import { CASE_STUDIES, PROFILE } from '../../src/lib/content';
 
 const destinations = [
   { name: 'about', path: '/about/', title: PROFILE.name },
-  ...CASE_STUDIES.map(project => ({ name: project.name, path: project.caseStudy.path, title: project.caseStudy.title })),
+  ...['dev-setup', 'phission', 'portfolio', 'finlitt', 'trustdefi', 'instagram-scanner'].map(name => {
+    const study = CASE_STUDIES.find(project => project.caseStudy.path === `/projects/${name}/`)!.caseStudy;
+    return { name, path: study.path, title: study.title };
+  }),
 ];
 
 type OpenCall = { path: string; target?: string; features?: string; active: boolean; inEnter: boolean; entries: number; returnedNull?: boolean };
@@ -118,7 +121,7 @@ for (const destination of destinations) {
   }
 }
 
-test('bare open completes, lists exactly three native new-tab links and does not call window.open', async ({ page, context }) => {
+test('bare open completes, lists exactly seven native new-tab links and does not call window.open', async ({ page, context }) => {
   await observeOpen(page, 'throw');
   await page.goto('/');
   const input = page.locator('#terminal-input');
@@ -127,7 +130,7 @@ test('bare open completes, lists exactly three native new-tab links and does not
   await expect(input).toHaveValue('open');
   await input.press('Enter');
   const links = page.locator('#terminal-output .entry-output a');
-  await expect(links).toHaveText(['about (opens in a new tab)', 'dev-setup (opens in a new tab)', 'phission (opens in a new tab)']);
+  await expect(links).toHaveText(destinations.map(destination => `${destination.name} (opens in a new tab)`));
   for (const destination of destinations) {
     const link = links.filter({ hasText: `${destination.name} (opens in a new tab)` });
     await expect(link).toHaveAttribute('href', destination.path);
@@ -148,7 +151,12 @@ test('invalid arguments never call window.open or create arbitrary output links;
   await page.goto('/');
   const input = page.locator('#terminal-input');
   for (const argument of [
-    'missing', 'experience', '/experience/', 'about extra', 'about phission', '/about/', 'about/', '../about', 'about/nested',
+    'missing', 'experience', '/experience/',
+    'PIT-UN-hackathon2023', 'hackUMBC2022', 'primetimetank21.github.io', 'apple-music-playlist-converter',
+    'portfolio extra', 'finlitt trustdefi', 'trustdefi/', 'instagram',
+    '/projects/portfolio/', '../finlitt', 'trustdefi#evidence', 'instagram-scanner?x=1',
+    'https://primetimetank21.github.io/projects/portfolio/',
+    'about extra', 'about phission', '/about/', 'about/', '../about', 'about/nested',
     'about?x=1', 'about#skills', '%61bout', 'https://primetimetank21.github.io/about/',
     'dev-setup extra', 'phission dev-setup', '/projects/dev-setup/', '../phission',
     'https://example.com', 'https://primetimetank21.github.io/projects/phission/', '//example.com',
@@ -160,7 +168,7 @@ test('invalid arguments never call window.open or create arbitrary output links;
       await input.press('Enter');
       const entry = page.locator('#terminal-output .terminal-entry').last();
       await expect(entry.locator('.entry-cmd')).toHaveText(`open ${argument}`);
-      await expect(entry.locator('.entry-output')).toHaveText('Usage: open [about | dev-setup | phission]Type `help` to see available commands.');
+      await expect(entry.locator('.entry-output')).toHaveText('Usage: open [about | dev-setup | phission | portfolio | finlitt | trustdefi | instagram-scanner]Type `help` to see available commands.');
       await expect(entry.locator('a, img, script')).toHaveCount(0);
       await expect(input).toHaveValue('');
       expect(await calls(page)).toEqual([]);

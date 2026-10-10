@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
-import { ABOUT_PARAGRAPHS, PROJECTS, SKILL_GROUPS, CONTACT, PROFILE, RESUME } from '../../src/lib/content';
+import { ABOUT_PARAGRAPHS, PROJECTS, CASE_STUDIES, SKILL_GROUPS, CONTACT, PROFILE, RESUME } from '../../src/lib/content';
 import { textContrast } from './helpers/contrast';
 
 /**
@@ -236,7 +236,7 @@ const navigation = [
   ['Contact', '/#contact'], ['Terminal', '/#terminal'],
 ] as const;
 
-for (const route of ['/', '/about/', '/experience/', '/projects/dev-setup/', '/projects/phission/']) {
+for (const route of ['/', '/about/', '/experience/', ...CASE_STUDIES.map(project => project.caseStudy.path)]) {
   for (const javaScriptEnabled of [true, false]) {
     test.describe(`shared navigation on ${route}, JS ${javaScriptEnabled}`, () => {
       test.use({ javaScriptEnabled });
@@ -297,7 +297,7 @@ for (const javaScriptEnabled of [true, false]) {
     for (const width of [320, 1362]) {
       test(`bounded hiding, first-Tab reveal and Enter-to-main on every route at ${width}px`, async ({ page }) => {
         await page.setViewportSize({ width, height: 844 });
-        for (const route of ['/', '/about/', '/experience/', '/projects/dev-setup/', '/projects/phission/', '/experience/nested/']) {
+        for (const route of ['/', '/about/', '/experience/', ...CASE_STUDIES.map(project => project.caseStudy.path), '/experience/nested/']) {
           await page.goto(route);
           const skip = page.getByRole('link', { name: 'Skip to content', exact: true });
           const hiddenBox = (await skip.boundingBox())!;
@@ -344,7 +344,7 @@ test.describe('static portfolio', () => {
         const card = main.getByRole('article', { name: project.name, exact: true });
         await expect(card).toContainText(project.description);
         await expect(card.locator(`a[href="${project.url}"]`)).toBeVisible();
-        if (project.caseStudy) {
+        if (project.featured && project.caseStudy) {
           await expect(card.getByRole('heading', { level: 3 })).toHaveText(project.caseStudy.title);
           await expect(card.getByRole('list', { name: 'Technologies', exact: true }).getByRole('listitem'))
             .toHaveText([...project.caseStudy.technologies]);
@@ -367,13 +367,22 @@ test.describe('static portfolio', () => {
           }
         } else {
           await expect(card.getByRole('heading', { level: 3 })).toHaveText(project.name);
-          await expect(card.locator('.case-study')).toHaveCount(0);
+          await expect(card.locator('details, .case-study, .technologies')).toHaveCount(0);
+          await expect(card).not.toHaveClass(/featured/);
+          const readLink = card.getByRole('link', { name: `Read case study for ${project.name}` });
+          if (project.caseStudy) {
+            await expect(readLink).toHaveAttribute('href', project.caseStudy.path);
+            await expect(readLink).toBeVisible();
+            expect(await readLink.getAttribute('target')).toBeNull();
+          } else await expect(readLink).toHaveCount(0);
         }
       }
       await expect(main.locator('#projects article')).toHaveCount(7);
       await expect(main.locator('.featured-projects article')).toHaveCount(2);
       await expect(main.locator('.featured-projects .repo-name')).toHaveText(['dev-setup', 'phission']);
       await expect(main.locator('.other-projects article')).toHaveCount(5);
+      await expect(main.locator('.other-projects a[href^="/projects/"]')).toHaveCount(4);
+      await expect(main.locator('#projects details')).toHaveCount(2);
       await expect(main.locator('.other-projects article').first()).toHaveAttribute('aria-label', 'apple-music-playlist-converter');
       for (const group of SKILL_GROUPS) {
         for (const skill of group.items) await expect(main.locator('.skills')).toContainText(skill);

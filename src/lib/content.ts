@@ -8,6 +8,8 @@ export interface Project {
   description: string;
   url: string;
   status: 'active' | 'completed';
+  /** Editorial homepage prominence, independent of having a detail page. */
+  featured?: boolean;
   caseStudy?: {
     path: `/projects/${string}/`;
     title: string;
@@ -128,6 +130,7 @@ export const PROJECTS: readonly Project[] = [
     description: 'A shell-based toolkit for bootstrapping familiar toolchains across Linux, macOS, WSL, and Windows.',
     url: 'https://github.com/primetimetank21/dev-setup',
     status: 'active',
+    featured: true,
     caseStudy: {
       path: '/projects/dev-setup/',
       title: 'Development environment automation',
@@ -149,6 +152,7 @@ export const PROJECTS: readonly Project[] = [
     description: 'A synthetic-only email safety demo for pausing, inspecting destinations, and understanding uncertain results.',
     url: 'https://github.com/primetimetank21/phission',
     status: 'completed',
+    featured: true,
     caseStudy: {
       path: '/projects/phission/',
       title: 'From HCI prototype to a reproducible demo',
@@ -174,31 +178,95 @@ export const PROJECTS: readonly Project[] = [
   },
   {
     name: 'PIT-UN-hackathon2023',
-    description: 'FinLITT \u2014 a personalized financial literacy web app built with Python and Pynecone.',
+    description: 'FinLITT — a financial-literacy hackathon prototype with linked learning and savings screens, built in Python and Pynecone.',
     url: 'https://github.com/primetimetank21/PIT-UN-hackathon2023',
     status: 'completed',
+    caseStudy: {
+      path: '/projects/finlitt/',
+      title: 'FinLITT: exploring financial-literacy learning paths',
+      technologies: ['Python', 'Pynecone'],
+      flow: ['Topic selection', 'Knowledge question', 'Learning + savings screens'],
+      problem: 'FinLITT is a 2023 team hackathon prototype motivated by gaps in financial-literacy education. It explores how a learner might move from a familiar topic to introductory material and a simple spending choice.',
+      approach: 'Pynecone components define the screens and explicit links between them. The saving topic leads to a yes/no knowledge question, which branches to a questionnaire or a fixed video recommendation. The savings exercise links to separate burger and candy outcome screens.',
+      tradeoff: 'Explicit routes make the intended journey inspectable, but this is not a personalized learning engine. The sign-in screen links onward without authenticating, and the learning material and savings outcomes are fixed. AI personalization was future scope, not an implemented feature.',
+      evidence: 'The linked source shows route registration, branching, and fixed screens. This is a source review of the historical prototype; its current runtime and educational outcomes have not been revalidated. No individual team role or learning-impact measurement is claimed.',
+      links: [
+        { label: 'Prototype screens and routes', url: 'https://github.com/primetimetank21/PIT-UN-hackathon2023/blob/bf5aaa7f1031478f16527bd23c5f71a16d856dbe/frontend/frontend/frontend.py#L41-L78' },
+        { label: 'Knowledge-question branches', url: 'https://github.com/primetimetank21/PIT-UN-hackathon2023/blob/bf5aaa7f1031478f16527bd23c5f71a16d856dbe/frontend/frontend/routes/initial_question.py' },
+        { label: 'Savings exercise', url: 'https://github.com/primetimetank21/PIT-UN-hackathon2023/blob/bf5aaa7f1031478f16527bd23c5f71a16d856dbe/frontend/frontend/routes/saving_simulation.py' },
+        { label: 'Team context and future scope', url: 'https://github.com/primetimetank21/PIT-UN-hackathon2023/blob/bf5aaa7f1031478f16527bd23c5f71a16d856dbe/README.md' },
+      ],
+    },
   },
   {
     name: 'hackUMBC2022',
-    description: 'TrustDeFi \u2014 Python tool to assess Ethereum wallet trustworthiness via on-chain transaction history.',
+    description: 'TrustDeFi — a hackathon prototype that brings Ethereum transaction history and public address labels into one view.',
     url: 'https://github.com/primetimetank21/hackUMBC2022',
     status: 'completed',
+    caseStudy: {
+      path: '/projects/trustdefi/',
+      title: 'TrustDeFi: transaction context, not a trust prediction',
+      technologies: ['Python', 'FastAPI', 'Requests', 'BeautifulSoup', 'Jinja2'],
+      flow: ['Ethereum address', 'Covalent transactions + Etherscan labels', 'Template view'],
+      problem: 'The 2022 TrustDeFi team hackathon project explored ways to inspect an Ethereum address before transacting. The implemented web view brings transaction records and existing public labels together rather than asking readers to inspect each source separately.',
+      approach: 'A FastAPI address route requests transaction data from Covalent and calls a BeautifulSoup scraper for Etherscan label links. A Jinja2 template displays the returned labels, transaction hashes, quoted values, and dates.',
+      tradeoff: 'Third-party data supplies context, not a safety verdict. The scraper returns an empty list for a non-200 response, and the view treats an empty label list as reassuring. Missing labels and fetch failures must not be read as wallet safety; the code does not implement an ML fraud model or validated trust prediction.',
+      evidence: 'The route and two data adapters document the historical integration. Current API availability, scraping behavior, and runtime have not been revalidated. The README places machine-learning classification in future scope; no predictive accuracy or individual team contribution is claimed.',
+      links: [
+        { label: 'Address route and label fallback', url: 'https://github.com/primetimetank21/hackUMBC2022/blob/3fd8040b1f6caf6bce1c3dc59a3e9ba315d42fcb/main.py#L27-L48' },
+        { label: 'Transaction adapter', url: 'https://github.com/primetimetank21/hackUMBC2022/blob/3fd8040b1f6caf6bce1c3dc59a3e9ba315d42fcb/covalent_api_lib/__init__.py' },
+        { label: 'Label scraper and failure behavior', url: 'https://github.com/primetimetank21/hackUMBC2022/blob/3fd8040b1f6caf6bce1c3dc59a3e9ba315d42fcb/etherscan_lib/__init__.py' },
+        { label: 'Team context and future scope', url: 'https://github.com/primetimetank21/hackUMBC2022/blob/3fd8040b1f6caf6bce1c3dc59a3e9ba315d42fcb/README.md' },
+      ],
+    },
   },
   {
     name: 'instagram-scanner',
-    description: 'Playwright-based Python tool that scans your Instagram account to generate stats based on your followers and following numbers.',
+    description: 'A Python automation project for comparing an Instagram account’s followers and following, with local data outputs.',
     url: 'https://github.com/primetimetank21/instagram-scanner',
     status: 'completed',
+    caseStudy: {
+      path: '/projects/instagram-scanner/',
+      title: 'Instagram Scanner: from browser session to local comparison',
+      technologies: ['Python', 'Playwright', 'Requests', 'JSON'],
+      flow: ['Saved browser session', 'Paginated follower lists', 'Local comparison + files'],
+      problem: 'Comparing followers and following manually is repetitive. This project explores a local workflow that retrieves both lists and identifies usernames present in one but not the other.',
+      approach: 'Playwright starts a browser with saved session state. Helpers read displayed counts, extract cookies and a request header, then use Requests to paginate followers and following. The workflow writes JSON as it collects records, compares usernames in both directions, and saves profile links to local text files.',
+      tradeoff: 'Reusing a browser session avoids embedding a password in the script, but saved state and outputs remain sensitive account data. Private web endpoints, page text, and embedded headers are fragile dependencies. Partial fetches or changing lists can distort the comparison; these files are not a complete account audit.',
+      evidence: 'The driver and helpers show session bootstrap, pagination, local output, and comparison logic. Review was source-only: no Instagram automation was executed and no account data was collected. Present-day compatibility and completeness have not been revalidated; this is not an official Instagram integration.',
+      links: [
+        { label: 'Workflow driver', url: 'https://github.com/primetimetank21/instagram-scanner/blob/6ce197e541d264f19a51eff4e3c91f3d8b3ec91c/src/main.py#L16-L66' },
+        { label: 'Browser session and request inputs', url: 'https://github.com/primetimetank21/instagram-scanner/blob/6ce197e541d264f19a51eff4e3c91f3d8b3ec91c/src/helpers/utils.py#L21-L103' },
+        { label: 'Pagination and local comparison', url: 'https://github.com/primetimetank21/instagram-scanner/blob/6ce197e541d264f19a51eff4e3c91f3d8b3ec91c/src/helpers/utils.py#L136-L278' },
+      ],
+    },
   },
   {
     name: 'primetimetank21.github.io',
-    description: 'Terminal-style portfolio \u2014 Astro, TypeScript, GitHub Pages.',
+    description: 'A static-first engineering portfolio with native project navigation, an optional terminal, and tested delivery to GitHub Pages.',
     url: 'https://github.com/primetimetank21/primetimetank21.github.io',
     status: 'active',
+    caseStudy: {
+      path: '/projects/portfolio/',
+      title: 'Portfolio: a browsable site with an optional terminal',
+      technologies: ['Astro', 'TypeScript', 'GSAP', 'Vitest', 'Playwright', 'GitHub Actions'],
+      flow: ['Shared typed content', 'Static pages + native links', 'Optional terminal + themes'],
+      problem: 'A terminal is a playful way to explore engineering work, but it should not be a prerequisite for reading it. This portfolio pairs that interaction with a browsable site: identity, experience, project details, and contact links remain available without learning commands or enabling JavaScript.',
+      approach: 'Astro renders typed content into static HTML for GitHub Pages. Homepage cards and standalone studies reuse one content source and the same study-body component. Native links provide ordinary navigation; independent details/summary disclosures keep the featured studies optional on the homepage. The terminal layers command history, completion, and structured output over that content. Its open command accepts only named local destinations, requests tabs synchronously with opener isolation, and always provides a native fallback link. Shared theme tokens and reduced-motion handling keep presentation separate from the reading path.',
+      tradeoff: 'Static output keeps the content available without a client-side application, but edits still require a build and publication. The terminal deliberately cannot open arbitrary URLs or paths. A null window.open result is not treated as proof of a blocked tab, because opener isolation can also produce null on success. Motion and theme switching are enhancements, not requirements for accessing the pages.',
+      evidence: 'Vitest covers shared content, command parsing, destination boundaries, history, and motion helpers. Playwright exercises native disclosures, no-JS navigation, keyboard behavior, theme persistence, real isolated tabs, fallback handling, and nested 404s against a production build. GitHub Actions separates build/check, unit, functional E2E, and blocking visual comparison; visual baselines use a pinned official Playwright container and a workflow with an optional artifact-only review mode. These checks provide regression evidence, not measured recruiting impact, full accessibility conformance, or physical-device validation. The linked files describe the reviewed engineering baseline, before this study was added.',
+      links: [
+        { label: 'Static homepage composition', url: 'https://github.com/primetimetank21/primetimetank21.github.io/blob/3273d8fa4d27842c915ac5e96614a34b00097cb9/src/pages/index.astro' },
+        { label: 'Shared study body', url: 'https://github.com/primetimetank21/primetimetank21.github.io/blob/3273d8fa4d27842c915ac5e96614a34b00097cb9/src/components/CaseStudyBody.astro' },
+        { label: 'Safe-open browser checks', url: 'https://github.com/primetimetank21/primetimetank21.github.io/blob/3273d8fa4d27842c915ac5e96614a34b00097cb9/tests/e2e/terminal-open.spec.ts' },
+        { label: 'Build and test gates', url: 'https://github.com/primetimetank21/primetimetank21.github.io/blob/3273d8fa4d27842c915ac5e96614a34b00097cb9/.github/workflows/build-check.yml' },
+        { label: 'Artifact-only visual review mode', url: 'https://github.com/primetimetank21/primetimetank21.github.io/blob/3273d8fa4d27842c915ac5e96614a34b00097cb9/.github/workflows/update-visual-baselines.yml' },
+      ],
+    },
   },
 ];
 
-/** The same two studies drive featured cards, static routes, and terminal destinations. */
+/** All study routes share this content; homepage prominence is an editorial choice. */
 export type CaseStudyProject = Project & { caseStudy: NonNullable<Project['caseStudy']> };
 export const CASE_STUDIES = PROJECTS.filter((project): project is CaseStudyProject => !!project.caseStudy);
 
