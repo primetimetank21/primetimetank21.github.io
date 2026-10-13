@@ -27,7 +27,7 @@ test.describe('homepage', () => {
 // ── Native résumé download ───────────────────────────────────────────────────
 
 const resumeLabel = 'Download résumé (PDF)';
-const resumeSHA256 = 'e83599523c5a8bd34fa2b6c2f26f6f1b6680b7271419d51f2ce7dc6c403cc4b9';
+const resumeSHA256 = 'd89ce76cf34ead2414638692149579f39d2cb825f17ccd720ed9aaab87001231';
 const acceptedResume = readFileSync(new URL(`../../public${RESUME.url}`, import.meta.url));
 
 test('public résumé URL serves the exact accepted PDF with its media type', async ({ request, baseURL }) => {
@@ -36,7 +36,7 @@ test('public résumé URL serves the exact accepted PDF with its media type', as
   expect(response.url()).toBe(new URL(RESUME.url, baseURL).href);
   expect(response.headers()['content-type']).toMatch(/^application\/pdf(?:;|$)/);
   const bytes = await response.body();
-  expect(bytes.length).toBe(73992);
+  expect(bytes.length).toBe(75146);
   expect(createHash('sha256').update(bytes).digest('hex')).toBe(resumeSHA256);
   expect(bytes.equals(acceptedResume)).toBe(true);
 });
@@ -114,7 +114,7 @@ for (const route of ['/', '/about/', '/experience/']) {
             expect(download.suggestedFilename()).toBe(RESUME.filename);
             expect(await download.failure()).toBeNull();
             const bytes = readFileSync((await download.path())!);
-            expect(bytes.length).toBe(73992);
+            expect(bytes.length).toBe(75146);
             expect(createHash('sha256').update(bytes).digest('hex')).toBe(resumeSHA256);
             expect(bytes.equals(acceptedResume)).toBe(true);
             await expect(page).toHaveURL(route);
