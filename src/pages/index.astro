@@ -2,6 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import ThemeToggle from '../components/ThemeToggle.astro';
 import SiteNavLinks from '../components/SiteNavLinks.astro';
+import PageClosing from '../components/PageClosing.astro';
 import TerminalShell from '../components/Terminal/TerminalShell.astro';
 import ProjectCard from '../components/ProjectCard.astro';
 import { PROFILE, ABOUT_PARAGRAPHS, PROJECTS, SKILL_GROUPS, CONTACT, RESUME } from '../lib/content';
@@ -79,6 +80,7 @@ import { PROFILE, ABOUT_PARAGRAPHS, PROJECTS, SKILL_GROUPS, CONTACT, RESUME } fr
       </div>
       <TerminalShell />
     </section>
+    <PageClosing />
   </div>
 </Layout>
 

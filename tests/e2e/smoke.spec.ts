@@ -239,7 +239,8 @@ const navigation = [
 for (const route of ['/', '/about/', '/experience/', ...CASE_STUDIES.map(project => project.caseStudy.path)]) {
   for (const javaScriptEnabled of [true, false]) {
     test.describe(`shared navigation on ${route}, JS ${javaScriptEnabled}`, () => {
-      test.use({ javaScriptEnabled });
+      // This matrix checks link destinations; page-closing.spec.ts exercises smooth fragments.
+      test.use({ javaScriptEnabled, contextOptions: { reducedMotion: 'reduce' } });
       for (const width of [1280, 390]) {
         test(`same ordered native links at ${width}px`, async ({ page, context }) => {
           await page.setViewportSize({ width, height: 844 });

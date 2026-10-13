@@ -18,7 +18,8 @@ async function featuredCardGeometry(page: Page) {
 
 for (const javaScriptEnabled of [true, false]) {
   test.describe(`native disclosures with JavaScript ${javaScriptEnabled ? 'on' : 'off'}`, () => {
-    test.use({ javaScriptEnabled });
+    // Disclosure geometry is independent of root motion (covered in page-closing.spec.ts).
+    test.use({ javaScriptEnabled, contextOptions: { reducedMotion: 'reduce' } });
 
     for (const width of [1440, 960]) {
       test(`collapsed featured cards align bottoms, links and summaries at ${width}px`, async ({ page }) => {

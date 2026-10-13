@@ -1,0 +1,23 @@
+<div class="page-closing">
+  <slot />
+  <a class="back-to-top" href="#main-content">Back to top <span aria-hidden="true">↑</span></a>
+</div>
+
+<style>
+  /* Native fragment scrolling only on pages with this ending. */
+  @media (prefers-reduced-motion: no-preference) {
+    :global(html:has(.page-closing)) { scroll-behavior: smooth; }
+  }
+  .page-closing {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    margin-top: 28px;
+    font-size: var(--font-size-sm);
+  }
+  .back-to-top:only-child { margin-left: auto; }
+  @media (max-width: 600px) {
+    .page-closing { margin-top: var(--space-6); }
+  }
+</style>

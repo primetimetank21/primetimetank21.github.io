@@ -3,6 +3,7 @@ import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
 import Layout from '../../layouts/Layout.astro';
 import ThemeToggle from '../../components/ThemeToggle.astro';
 import SiteNavLinks from '../../components/SiteNavLinks.astro';
+import PageClosing from '../../components/PageClosing.astro';
 import CaseStudyBody from '../../components/CaseStudyBody.astro';
 import { CASE_STUDIES, PROFILE } from '../../lib/content';
 
@@ -36,14 +37,15 @@ const study = project.caseStudy;
       <a class="source-link" href={project.url} target="_blank" rel="noopener noreferrer">Source <span class="sr-only">for {project.name}</span><span aria-hidden="true">↗</span></a>
     </header>
     <CaseStudyBody study={study} headingLevel="h2" />
-    <a class="back-link" href="/#projects">← Back to projects</a>
+    <PageClosing>
+      <a href="/#projects">← Back to projects</a>
+    </PageClosing>
   </article>
 </Layout>
 
 <style>
   .case-study-page { width: 100%; max-width: 76ch; }
   .back-link { display: inline-block; margin-block: var(--space-4) var(--space-8); font-size: var(--font-size-sm); }
-  .case-study-page > .back-link:last-child { margin-block: var(--space-8) 0; }
   .study-heading { margin-bottom: var(--space-8); }
   .repo-name { display: flex; flex-wrap: wrap; gap: var(--space-3); color: var(--color-info); font-size: var(--font-size-sm); margin-bottom: var(--space-4); }
   .status { color: var(--color-fg-subtle); }

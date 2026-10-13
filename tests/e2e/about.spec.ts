@@ -3,7 +3,8 @@ import { PROFILE, ABOUT_PARAGRAPHS, SKILL_GROUPS, CASE_STUDIES, CONTACT, RESUME 
 import { textContrast } from './helpers/contrast';
 
 test.describe('static About page', () => {
-  test.use({ javaScriptEnabled: false });
+  // Motion is exercised separately in page-closing.spec.ts.
+  test.use({ javaScriptEnabled: false, contextOptions: { reducedMotion: 'reduce' } });
 
   for (const width of [1280, 390, 320]) {
     test(`shared content and native navigation work without JavaScript at ${width}px`, async ({ page, context }) => {
@@ -37,7 +38,7 @@ test.describe('static About page', () => {
       await expect(main.locator('.skills dt')).toHaveText(SKILL_GROUPS.map(group => group.label));
       await expect(main.locator('.skills dd')).toHaveText(SKILL_GROUPS.map(group => group.items.join(' · ')));
       await expect(main.getByText(CONTACT.summary, { exact: true })).toBeVisible();
-      await expect(main.locator('a')).toHaveCount(2 + CONTACT.links.length + 1);
+      await expect(main.locator('a')).toHaveCount(2 + CONTACT.links.length + 2);
       // New detail pages must not expand the accepted About public-work copy.
       await expect(main.locator('.study-links a')).toHaveText([
         'dev-setup — Development environment automation',
