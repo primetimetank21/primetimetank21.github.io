@@ -300,9 +300,9 @@ export const SKILLS_LINES: readonly string[] = [
 // ─── Résumé ──────────────────────────────────────────────────────────────────
 
 export const RESUME = {
-  url: '/resume/earl_tankard_jr-swe_resume-2026-10-04.pdf',
-  filename: 'earl_tankard_jr-swe_resume-2026-10-04.pdf',
-  updated: 'Oct 4, 2026',
+  url: '/resume/earl_tankard_jr-swe_resume-2026-10-12.pdf',
+  filename: 'earl_tankard_jr-swe_resume-2026-10-12.pdf',
+  updated: 'Oct 12, 2026',
 } as const;
 
 // ─── Links ───────────────────────────────────────────────────────────────────

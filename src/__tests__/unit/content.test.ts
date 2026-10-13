@@ -6,9 +6,9 @@ import { PROJECTS, CASE_STUDIES, CONTACT, LINKS_LINES, RESUME, EXPERIENCE } from
 describe('public résumé', () => {
   it('shares the accepted same-origin asset URL and dated download filename', () => {
     expect(RESUME).toEqual({
-      url: '/resume/earl_tankard_jr-swe_resume-2026-10-04.pdf',
-      filename: 'earl_tankard_jr-swe_resume-2026-10-04.pdf',
-      updated: 'Oct 4, 2026',
+      url: '/resume/earl_tankard_jr-swe_resume-2026-10-12.pdf',
+      filename: 'earl_tankard_jr-swe_resume-2026-10-12.pdf',
+      updated: 'Oct 12, 2026',
     });
     expect(RESUME.url).toBe(`/resume/${RESUME.filename}`);
   });
@@ -16,9 +16,9 @@ describe('public résumé', () => {
   it('ships the accepted PDF unchanged', () => {
     const pdf = readFileSync(new URL(`../../../public${RESUME.url}`, import.meta.url));
     expect(pdf.subarray(0, 5).toString()).toBe('%PDF-');
-    expect(pdf.length).toBe(73992);
+    expect(pdf.length).toBe(75146);
     expect(createHash('sha256').update(pdf).digest('hex'))
-      .toBe('e83599523c5a8bd34fa2b6c2f26f6f1b6680b7271419d51f2ce7dc6c403cc4b9');
+      .toBe('d89ce76cf34ead2414638692149579f39d2cb825f17ccd720ed9aaab87001231');
   });
 
   it('keeps contact data and terminal links unchanged', () => {
