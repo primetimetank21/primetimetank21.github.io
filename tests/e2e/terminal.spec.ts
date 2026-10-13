@@ -401,6 +401,8 @@ test.describe('keyboard navigation', () => {
     await expect(input).toBeFocused();
     await page.keyboard.type('zzzzzz');
     await page.keyboard.press('Tab');
+    await expect(page.getByRole('link', { name: 'Back to top', exact: true })).toBeFocused();
+    await page.keyboard.press('Tab');
     await expect(page.locator('footer a').first()).toBeFocused();
     await page.keyboard.press('Tab');
     await expect(page.locator('footer a').last()).toBeFocused();
@@ -421,6 +423,8 @@ test.describe('keyboard navigation', () => {
       await tabTo(page, page.locator('#terminal-input'));
       await page.keyboard.type(value);
       await page.keyboard.press('Tab');
+      await expect(page.getByRole('link', { name: 'Back to top', exact: true })).toBeFocused();
+      await page.keyboard.press('Tab');
       await expect(page.locator('footer a').first()).toBeFocused();
     });
   }
@@ -433,32 +437,48 @@ test.describe('keyboard navigation', () => {
     await page.keyboard.press('Tab');
     await expect(page.locator('#terminal-input')).toHaveValue('projects');
     await page.keyboard.press('Tab');
+    await expect(page.getByRole('link', { name: 'Back to top', exact: true })).toBeFocused();
+    await page.keyboard.press('Tab');
     await expect(page.locator('footer a').first()).toBeFocused();
   });
 });
 
-test('text-only scrollback can be reached and scrolled with the keyboard', async ({ page }) => {
-  await page.goto('/');
-  await tabTo(page, page.locator('#terminal-input'));
-  await page.keyboard.type('clear');
-  await page.keyboard.press('Enter');
-  for (let i = 0; i < 5; i++) {
-    await page.keyboard.type('about');
-    await page.keyboard.press('Enter');
+for (const reducedMotion of ['no-preference', 'reduce'] as const) {
+  for (const width of [1280, 320]) {
+    test(`text-only scrollback stays independent of root scrolling, ${reducedMotion} at ${width}px`, async ({ page }) => {
+      await page.emulateMedia({ reducedMotion });
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto('/');
+      await tabTo(page, page.locator('#terminal-input'));
+      await page.keyboard.type('clear');
+      await page.keyboard.press('Enter');
+      for (let i = 0; i < 5; i++) {
+        await page.keyboard.type('about');
+        await page.keyboard.press('Enter');
+      }
+      const log = page.getByRole('log', { name: 'Terminal output' });
+      await expect(log).toHaveAttribute('tabindex', '0');
+      await expect(log).toHaveCSS('scroll-behavior', 'auto');
+      await expect(log.locator('a')).toHaveCount(0);
+      await expect.poll(() => log.evaluate(el => el.scrollTop)).toBeGreaterThan(0);
+      await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
+      const pageY = await page.evaluate(() => window.scrollY);
+      await page.keyboard.type('about');
+      await page.keyboard.press('Enter');
+      await expect.poll(() => log.evaluate(el => Math.abs(el.scrollHeight - el.clientHeight - el.scrollTop))).toBeLessThanOrEqual(1);
+      expect(await page.evaluate(() => window.scrollY)).toBe(pageY);
+      await page.keyboard.press('Shift+Tab');
+      await expect(page.locator('#terminal-start')).toBeFocused();
+      await page.keyboard.press('Shift+Tab');
+      await expect(log).toBeFocused();
+      expect(parseFloat(await log.evaluate(el => getComputedStyle(el).outlineWidth))).toBeGreaterThanOrEqual(2);
+      const before = await log.evaluate(el => el.scrollTop);
+      await page.keyboard.press('PageUp');
+      await expect.poll(() => log.evaluate(el => el.scrollTop)).toBeLessThan(before);
+      expect(await page.evaluate(() => window.scrollY)).toBe(pageY);
+    });
   }
-  const log = page.getByRole('log', { name: 'Terminal output' });
-  await expect(log).toHaveAttribute('tabindex', '0');
-  await expect(log.locator('a')).toHaveCount(0);
-  await expect.poll(() => log.evaluate(el => el.scrollTop)).toBeGreaterThan(0);
-  await page.keyboard.press('Shift+Tab');
-  await expect(page.locator('#terminal-start')).toBeFocused();
-  await page.keyboard.press('Shift+Tab');
-  await expect(log).toBeFocused();
-  expect(parseFloat(await log.evaluate(el => getComputedStyle(el).outlineWidth))).toBeGreaterThanOrEqual(2);
-  const before = await log.evaluate(el => el.scrollTop);
-  await page.keyboard.press('PageUp');
-  await expect.poll(() => log.evaluate(el => el.scrollTop)).toBeLessThan(before);
-});
+}
 
 for (const composition of [
   { name: 'active composition', isComposing: true, keyCode: 13 },

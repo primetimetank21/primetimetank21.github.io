@@ -2,6 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import ThemeToggle from '../components/ThemeToggle.astro';
 import SiteNavLinks from '../components/SiteNavLinks.astro';
+import PageClosing from '../components/PageClosing.astro';
 import { PROFILE, EXPERIENCE, RESUME } from '../lib/content';
 ---
 
@@ -59,18 +60,13 @@ import { PROFILE, EXPERIENCE, RESUME } from '../lib/content';
         ))}
       </ul>
     </section>
-    <div class="closing">
+    <PageClosing>
       <a href="/about/">More about how I work</a>
-      <a href="#main-content">Back to top <span aria-hidden="true">↑</span></a>
-    </div>
+    </PageClosing>
   </article>
 </Layout>
 
 <style>
-  /* Native fragment scrolling, limited to this page and motion preference. */
-  @media (prefers-reduced-motion: no-preference) {
-    :global(html:has(.experience-page)) { scroll-behavior: smooth; }
-  }
   .experience-page { width: 100%; max-width: 1080px; font-size: var(--font-size-base); }
   .page-heading { padding: var(--space-4) 0 var(--space-10); max-width: 850px; }
   .eyebrow { color: var(--color-success); font-size: var(--font-size-sm); margin-bottom: var(--space-3); }
@@ -95,7 +91,6 @@ import { PROFILE, EXPERIENCE, RESUME } from '../lib/content';
   .study-links { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6); margin-top: var(--space-6); list-style: none; }
   .study-links a { font-size: var(--font-size-base); }
   .study-links > li > span { display: block; color: var(--color-fg-subtle); font-size: 12px; line-height: 1.65; margin-top: 6px; }
-  .closing { display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--space-4); margin-top: 28px; font-size: var(--font-size-sm); }
   @media (max-width: 760px) {
     .engagement { grid-template-columns: 185px minmax(0, 1fr); gap: 28px; }
   }
@@ -111,6 +106,5 @@ import { PROFILE, EXPERIENCE, RESUME } from '../lib/content';
     .contribution + .contribution { margin-top: var(--space-6); padding-top: var(--space-6); }
     .public-work { padding: 22px 18px; }
     .study-links { grid-template-columns: 1fr; gap: 18px; }
-    .closing { margin-top: var(--space-6); }
   }
 </style>
